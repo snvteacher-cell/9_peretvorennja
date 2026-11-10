@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Тренажер: перетворення графіків</title>
+<style>:root{--bg:#eef2f6;--card:#fff;--ink:#1b2430;--muted:#5d6b7a;--line:#c9d3de;--acc:#2457b3;--accsoft:#e3ebf9;--ok:#1d7a4c;--oksoft:#e1f3e9;--bad:#c23b2e;--badsoft:#fbe6e3;
+ --or:#d9661f;--orsoft:#fcebdf;--blue:#2457b3;--plbg:#fff;--plgrid:#e3e8ee;--plax:#33404f;--ghost:#8f9aa6;--k1:#c23b2e;--k2:#1d7a4c;--k3:#7b3fa8;--inbg:#fff;
+ --font:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#141a22;--card:#1d2530;--ink:#e7edf4;--muted:#9aa8b8;--line:#33404f;--acc:#7ea6f0;--accsoft:#22324d;--ok:#5cc58f;--oksoft:#183427;--bad:#f07a6c;--badsoft:#3b1f1c;
+ --or:#f0a35c;--orsoft:#3a2a1b;--blue:#7ea6f0;--plbg:#18202a;--plgrid:#26303c;--plax:#b8c4d2;--ghost:#7d8a99;--k1:#f07a6c;--k2:#5cc58f;--k3:#c39af0;--inbg:#141a22;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141a22;--card:#1d2530;--ink:#e7edf4;--muted:#9aa8b8;--line:#33404f;--acc:#7ea6f0;--accsoft:#22324d;--ok:#5cc58f;--oksoft:#183427;--bad:#f07a6c;--badsoft:#3b1f1c;
+ --or:#f0a35c;--orsoft:#3a2a1b;--blue:#7ea6f0;--plbg:#18202a;--plgrid:#26303c;--plax:#b8c4d2;--ghost:#7d8a99;--k1:#f07a6c;--k2:#5cc58f;--k3:#c39af0;--inbg:#141a22;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.45;
+ padding:20px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+[hidden]{display:none!important}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{margin:0;font-size:clamp(24px,5vw,32px);font-weight:800}
+.hint{font-size:14px;color:var(--muted)}
+.bar{display:flex;gap:4px}.bar span{flex:1;height:8px;border-radius:4px;background:var(--line)}
+.bar span.ok{background:var(--ok)}.bar span.bad{background:var(--bad)}.bar span.cur{outline:2px solid var(--acc);outline-offset:1px}
+.q{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.qn{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--muted);font-weight:600}
+.badge{font-size:13px;font-weight:700;border-radius:8px;padding:2px 10px;color:#fff;background:var(--acc)}
+.badge.pr{background:var(--ok)}.badge.ex{background:var(--or)}
+.qt{font-size:21px;font-weight:700;margin:0}
+.cond{margin:0;font-size:19px}
+.tgrid{display:flex;flex-direction:column;gap:12px}
+.tfig{display:flex;justify-content:center}.tfig>.plot{width:100%;max-width:560px}
+.tfig .pans{width:100%;max-width:600px}.pan .plot{width:100%}
+.twork{display:flex;flex-direction:column;gap:10px}
+input.num{font-size:20px;width:68px;height:42px}input.num.s{width:60px}
+select.sel{font-size:19px;height:42px;min-width:52px}
+.keypad{max-width:420px}.keypad button{font-size:22px;height:44px}
+.answer{line-height:2.3}
+.work .line{line-height:2.3}
+.ex{grid-template-columns:1fr}.ex-right{order:-1;display:flex;flex-direction:column;align-items:center;gap:4px}.ex-bot{display:flex;flex-direction:column;align-items:center;text-align:center}.ex-fig{display:flex;justify-content:center;width:100%}.ex-fig>.plot{width:100%;max-width:600px}
+.ex .box{font-size:17px}
+.seg button,.krow button{padding:3px 10px;font-size:17px}
+.fbig{font-size:24px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font:inherit;font-weight:700;font-size:17px;padding:10px 18px;border-radius:12px;border:2px solid var(--acc);background:var(--acc);color:var(--card);cursor:pointer}
+.btn.alt{background:transparent;color:var(--acc)}
+.btn.ghost{background:transparent;color:var(--muted);border-color:var(--line)}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.msg{font-weight:700}
+.fb{border-radius:12px;padding:10px 14px;font-size:17px}
+.fb.ok{background:var(--oksoft);color:var(--ok)}.fb.bad{background:var(--badsoft);color:var(--bad)}
+.fb b{display:block;margin-bottom:2px}.fb .ansx{color:var(--ink)}
+.navb{display:flex;gap:10px;justify-content:space-between;align-items:center}
+.navb .cnt{color:var(--muted);font-size:15px;font-variant-numeric:tabular-nums}
+input.name{font:inherit;font-size:20px;padding:10px 14px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);width:100%}
+.result{text-align:center;align-items:center}
+.big{font-size:56px;font-weight:800;color:var(--acc);line-height:1}
+.grade{font-size:20px;font-weight:600}
+.topics{width:100%;display:flex;flex-direction:column;gap:8px;text-align:left}
+.tp{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;font-size:16px}
+.tp .meter{grid-column:1/-1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}.tp .meter span{display:block;height:100%;background:var(--ok)}
+.review{text-align:left;width:100%;display:flex;flex-direction:column;gap:8px}
+.review div{border-left:4px solid var(--bad);background:var(--badsoft);padding:8px 12px;border-radius:0 10px 10px 0;font-size:16px}
+@media (max-width:520px){.q{padding:14px}.cond{font-size:17px}body{font-size:17px}.ex .box{font-size:16px}input.num{width:56px}input.num.s{width:52px}.keypad button{height:42px}}
+@media (prefers-reduced-motion:no-preference){.q{animation:in .25s ease}@keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}}
+.legend.big{font-size:19px;gap:4px 18px}.legend .lgh{color:var(--muted)}
+.pans.p3{grid-template-columns:1fr 1fr}.pcap select.sel{height:38px}
+.haspans .tfig{flex-direction:column;align-items:stretch}
+.toc{display:grid;gap:10px}
+.tocb{font:inherit;text-align:left;display:flex;gap:14px;align-items:center;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px 16px;color:var(--ink);cursor:pointer}
+.tocb:hover{border-color:var(--acc)}
+.tocb b{flex:none;width:36px;height:36px;border-radius:50%;background:var(--acc);color:var(--card);display:grid;place-items:center}
+.tocb span{font-weight:700;font-size:19px}.tocb small{display:block;font-weight:400;color:var(--muted);font-size:16px}
+.bar2{display:flex;gap:12px;align-items:center}.bar2:empty{display:none}.btn.sm{padding:6px 12px;font-size:15px}.secn{font-size:17px}
+.mk{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mkc{border:2px solid var(--line);border-radius:12px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.mkf{font-size:19px;font-weight:700}.mkc .plot{width:100%;max-width:240px}.mkt{font-size:15px;text-align:center;line-height:1.3}
+.mkl{font-size:15px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lg{display:inline-block;width:30px;border-top:4px solid}.lg.b{border-color:var(--blue);border-top-style:dashed}.lg.o{border-color:var(--or)}
+@media (max-width:420px){.mk{grid-template-columns:1fr}}
+.v{font-family:Georgia,"Times New Roman",serif;font-style:italic}
+.nw{white-space:nowrap}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.85em;line-height:1.15;margin:0 3px}
+.fr>span:first-child{border-bottom:2px solid currentColor;padding:0 4px}
+.rt{white-space:nowrap}.rt>span{display:inline-block;border-top:2px solid currentColor;padding:2px 3px 0 2px;margin-left:-1px;line-height:1.25}
+.pa{color:var(--or);font-weight:800}
+.plot{display:block;max-width:100%;height:auto;touch-action:none;-webkit-user-select:none;user-select:none}
+.plot .pbg{fill:var(--plbg)}
+.plot .grid line{stroke:var(--plgrid);stroke-width:1}
+.plot .axes line{stroke:var(--plax);stroke-width:2}
+.plot .axes polygon{fill:var(--plax)}
+.plot text{font-family:"Segoe UI",Roboto,Arial,sans-serif}
+.plot .num{fill:var(--muted);paint-order:stroke;stroke:var(--plbg);stroke-width:4px;stroke-linejoin:round}
+.plot .an{font-family:Georgia,serif;font-style:italic;font-weight:700;fill:var(--ink)}
+.dragable{cursor:grab}.dragc.drag .crv{stroke-width:6}
+.crv{fill:none;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s}
+.crv.c-ghost{stroke:var(--ghost);stroke-dasharray:10 8;stroke-width:3}
+.crv.c-ghost.c-blue{stroke:var(--blue)}
+.crv.c-base{stroke:var(--blue)}.crv.c-new{stroke:var(--or)}
+.crv.c1{stroke:var(--k1)}.crv.c2{stroke:var(--k2)}.crv.c3{stroke:var(--k3)}
+.crv.c-ok{stroke:var(--ok);stroke-dasharray:3 9;stroke-width:6}
+.crv.c-fade{stroke:var(--bad);stroke-dasharray:6 6}
+.crv.right{stroke:var(--ok)}.crv.wrong{stroke:var(--bad)}
+.pt{stroke-width:3;fill:var(--plbg)}
+.pt.c-new{stroke:var(--or);fill:var(--or)}.pt.c-ghost{stroke:var(--ghost)}.pt.c-base{stroke:var(--blue);fill:var(--blue)}
+.pt.c1{fill:var(--k1);stroke:var(--k1)}.pt.c2{fill:var(--k2);stroke:var(--k2)}.pt.c3{fill:var(--k3);stroke:var(--k3)}
+.arr line{stroke:var(--or);stroke-width:2.5;stroke-dasharray:6 5}.arr polygon{fill:var(--or)}
+line.dash{stroke:var(--ghost);stroke-width:2.5;stroke-dasharray:6 5}
+line.dash.c1{stroke:var(--k1)}line.dash.c2{stroke:var(--k2)}
+.symax{stroke:var(--blue);stroke-width:10;opacity:.22}.symax.s2{stroke:var(--or)}
+.lab{font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:21px;fill:var(--ink);paint-order:stroke;stroke:var(--plbg);stroke-width:5px;stroke-linejoin:round}
+.vtx{fill:var(--or);stroke:var(--plbg);stroke-width:2.5;transition:r .15s}.vtx.act{r:12}.vtx.right{fill:var(--ok)}.vtx.wrong{fill:var(--bad)}
+.vhit{fill:transparent;cursor:ns-resize}
+.tag{fill:var(--plbg);stroke-width:3.5}.tag.c1{stroke:var(--k1)}.tag.c2{stroke:var(--k2)}.tag.c3{stroke:var(--k3)}
+.tagt{text-anchor:middle;font-weight:800;font-size:17px;fill:var(--ink)}
+.cn{line-height:1;display:inline-grid;place-items:center;width:1.45em;height:1.45em;border-radius:50%;border:3px solid;font-weight:800;font-size:.85em;vertical-align:middle}
+.cn.c1{border-color:var(--k1);color:var(--k1)}.cn.c2{border-color:var(--k2);color:var(--k2)}.cn.c3{border-color:var(--k3);color:var(--k3)}
+.pans{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pan{background:var(--card,#fff);border:2px solid var(--line);border-radius:12px;padding:4px 4px 2px;display:flex;flex-direction:column;align-items:center}
+.pcap{font-size:.9em;margin:2px 0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 22px;margin:4px 0 8px}
+.legend span{white-space:nowrap}
+input.num{font:inherit;font-weight:700;text-align:center;border:3px solid var(--line);border-radius:12px;background:var(--inbg);color:var(--ink);-webkit-user-select:text;user-select:text;vertical-align:middle}
+input.num:focus,input.num.foc{outline:none;border-color:var(--or);box-shadow:0 0 0 4px rgba(217,102,31,.22)}
+select.sel{font:inherit;font-weight:700;border-radius:12px;border:3px solid var(--line);background:var(--inbg);color:var(--ink);cursor:pointer;vertical-align:middle;padding:0 4px}
+input.num.right,select.sel.right{border-color:var(--ok);background:var(--oksoft);color:var(--ok)}
+input.num.wrong,select.sel.wrong{border-color:var(--bad);background:var(--badsoft);color:var(--bad)}
+.sc{margin:0 3px}
+.keypad{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.keypad button{font:inherit;font-weight:700;border-radius:12px;border:2px solid var(--line);background:var(--card,#fff);cursor:pointer;color:var(--ink)}
+.keypad button:active{background:var(--accsoft)}
+.answer{border:3px solid var(--ok);border-radius:14px;padding:6px 14px;margin:10px 0 6px;line-height:2.05}
+.work .line{margin:4px 0;line-height:2.05}
+.work .note{color:var(--muted);margin:2px 0 6px}
+.ex{display:grid;gap:20px}
+.box{border-radius:14px;padding:8px 16px;border:3px solid var(--acc);margin:0 0 10px;background:var(--card,#fff)}
+.box.soft{border-color:var(--line)}.box.warm{border-color:var(--or);background:var(--orsoft)}
+.hl{color:var(--acc);font-weight:700}.hl2{color:var(--or);font-weight:700}.or{color:var(--or)}.gr{color:var(--ok)}.rd{color:var(--bad)}
+.small{font-size:.86em}.muted{color:var(--muted)}
+.seg,.krow{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;align-items:center}
+.seg button,.krow button{font:inherit;border:3px solid var(--line);background:var(--card,#fff);color:var(--ink);border-radius:12px;padding:4px 14px;cursor:pointer}
+.seg button.cur,.krow button.cur{border-color:var(--or);background:var(--orsoft)}
+.krow>span{min-width:7.2em}
+.fbig{font-size:1.45em;font-weight:600;margin:8px 0 2px;min-height:1.5em}
+.cap{min-height:1.4em}
+.ctl{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center;margin:10px 0}
+.stp{display:inline-flex;align-items:center;gap:8px;font-size:1.15em;white-space:nowrap}
+.stp button{font:inherit;font-weight:800;width:1.9em;height:1.9em;border-radius:50%;border:3px solid var(--or);background:var(--card,#fff);color:var(--or);cursor:pointer;line-height:1}
+.stp output{min-width:1.8em;text-align:center;font-weight:800;color:var(--or)}
+.hint2{color:var(--muted);font-size:.85em}
+.locked .vhit,.locked .plot{cursor:default}
+.fl{font-size:24px;font-weight:700;white-space:nowrap;line-height:44px;font-family:"Segoe UI",Roboto,Arial,sans-serif;text-shadow:0 0 3px var(--plbg),0 0 3px var(--plbg),0 0 4px var(--plbg)}.fl-new{color:var(--or)}.fl-ghost{color:var(--ghost)}.fl .pa{color:inherit}
+</style>
+<style id="premium-redesign">
+/* Нова візуальна тема: світла, виразна, адаптивна */
+:root{
+  color-scheme:light;
+  --bg:#f2f6ff; --card:#ffffff; --ink:#17233d; --muted:#65738b;
+  --line:#dce5f2; --acc:#5267df; --accsoft:#edf0ff;
+  --ok:#16866b; --oksoft:#e4f7f0; --bad:#d94b5b; --badsoft:#fff0f1;
+  --or:#f08a3c; --orsoft:#fff2e7; --blue:#5267df;
+  --plbg:#fbfcff; --plgrid:#e6ebf5; --plax:#45536d; --ghost:#aeb9ca;
+  --k1:#e45c69; --k2:#159b7c; --k3:#8a63d2; --inbg:#fff;
+}
+@media (prefers-color-scheme:dark){
+ :root:not([data-theme="light"]){color-scheme:light}
+}
+*{box-sizing:border-box}
+body{
+ background:
+   radial-gradient(ellipse at 8% 0%,rgba(111,133,255,.15),transparent 34rem),
+   radial-gradient(ellipse at 95% 12%,rgba(255,173,105,.16),transparent 28rem),
+   linear-gradient(180deg,#f7f9ff 0%,#eef3fb 100%);
+ color:var(--ink); padding:26px 18px 46px; font-size:17px;
+}
+.wrap{max-width:900px;gap:18px}
+header{
+ position:relative; overflow:hidden; isolation:isolate;
+ padding:30px 30px 26px; border-radius:26px;
+ background:linear-gradient(120deg,#263b83 0%,#5267df 56%,#7b72df 100%);
+ color:#fff; box-shadow:0 16px 38px rgba(45,65,145,.2);
+}
+header:before,header:after{content:"";position:absolute;z-index:-1;border:1px solid rgba(255,255,255,.18);border-radius:50%}
+header:before{width:240px;height:240px;right:-55px;top:-135px;box-shadow:0 0 0 24px rgba(255,255,255,.045),0 0 0 52px rgba(255,255,255,.035)}
+header:after{width:115px;height:115px;right:150px;bottom:-82px;background:rgba(255,255,255,.07)}
+.eyebrow{color:#dce4ff;font-size:12px;letter-spacing:.14em;font-weight:800;margin-bottom:8px}
+h1{font-size:clamp(27px,5vw,39px);line-height:1.12;max-width:650px;letter-spacing:-.035em}
+header .hint{color:#e4e9ff;font-size:15px;max-width:700px;margin-top:12px}
+#bar{min-height:0}
+.bar2{padding:0 2px}
+.secn{color:#34436a;font-size:16px}
+.q{
+ background:rgba(255,255,255,.96); border:1px solid #e0e7f2;
+ border-radius:22px; padding:23px; gap:16px;
+ box-shadow:0 8px 26px rgba(37,55,98,.065),0 1px 2px rgba(37,55,98,.04);
+}
+.qn{font-size:13px;letter-spacing:.015em;color:#75819a;gap:9px}
+.badge{background:#5267df;border-radius:999px;padding:5px 12px;font-size:12px;letter-spacing:.02em}
+.badge.pr{background:#16866b}.badge.ex{background:#e47b31}
+.qt{font-size:clamp(19px,3vw,23px);line-height:1.3;color:#26365d}
+.cond{font-size:19px;line-height:1.55}
+.hint,.muted,.note{color:#71809a}
+.toc{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tocb{
+ min-width:0;min-height:88px;position:relative;overflow:hidden;
+ border:1px solid #e0e7f3;border-radius:18px;padding:15px 17px;
+ background:linear-gradient(145deg,#fff,#f8faff);
+ box-shadow:0 4px 12px rgba(43,61,110,.045);
+ transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.tocb:after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;right:-40px;bottom:-52px;background:rgba(82,103,223,.07)}
+.tocb:hover{transform:translateY(-2px);border-color:#9eacf2;box-shadow:0 9px 20px rgba(43,61,110,.1)}
+.tocb b{width:42px;height:42px;background:linear-gradient(145deg,#5267df,#7d75e4);box-shadow:0 5px 12px rgba(82,103,223,.22);font-size:17px}
+.tocb span{font-size:17px;line-height:1.3}
+.tocb small{font-size:13px;color:#8390a7;margin-top:4px}
+.btn{
+ border:0;border-radius:13px;padding:11px 18px;
+ background:linear-gradient(135deg,#5267df,#6b68dc);
+ color:#fff;box-shadow:0 5px 12px rgba(82,103,223,.19);
+ transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;
+}
+.btn:hover:not([disabled]){transform:translateY(-1px);filter:brightness(1.04);box-shadow:0 8px 16px rgba(82,103,223,.23)}
+.btn.alt{background:#edf0ff;color:#455bd0;border:1px solid #dce2ff;box-shadow:none}
+.btn.ghost{background:#f5f7fb;color:#697791;border:1px solid #e0e6f0;box-shadow:none}
+.btn.sm{padding:7px 13px}
+.navb{padding:4px 2px}
+.navb .cnt{font-weight:700;color:#71809a}
+.actions{gap:9px}
+.msg{font-size:15px}
+.fb{border-radius:14px}
+.box{border-radius:16px}
+.pan,.mkc{border:1px solid #e0e7f2;border-radius:15px;background:#fbfcff;padding:8px}
+.answer{border:1px solid #b7e5d5;background:#effaf6;border-radius:15px;padding:9px 14px}
+input.num,select.sel{border-width:2px;border-color:#d5deed;border-radius:10px}
+input.num:focus,select.sel:focus{border-color:#7484ed;box-shadow:0 0 0 4px rgba(82,103,223,.12)}
+.keypad button,.seg button,.krow button{
+ border:1px solid #dce4f1;border-radius:11px;background:#f8faff;
+ transition:background .15s ease,border-color .15s ease;
+}
+.seg button.cur,.krow button.cur{border-color:#f0a05d;background:#fff0e3;color:#a95318}
+.plot{border-radius:10px}
+footer{padding:12px 0 0;color:#8995aa!important;font-size:13px!important}
+@media(max-width:600px){
+ body{padding:13px 11px 30px;font-size:16px}
+ .wrap{gap:13px}
+ header{padding:23px 20px 21px;border-radius:21px}
+ .q{padding:17px;border-radius:18px;gap:13px}
+ .toc{grid-template-columns:1fr;gap:9px}
+ .tocb{min-height:72px;padding:11px 13px}
+ .tocb b{width:38px;height:38px}
+ .actions .btn{font-size:14px;padding:9px 12px}
+ .navb{gap:7px}
+}
+@media(prefers-reduced-motion:no-preference){
+ .tocb,.btn{will-change:transform}
+}
+</style>
+
+</head>
+<body><div class="wrap">
+<header>
+  <div class="eyebrow">Алгебра 9 · Тренажер</div>
+  <h1>Перетворення графіків функцій</h1>
+  <div class="hint" id="intro">Обери розділ. У кожному — пояснення з рухомим графіком, вправа як на уроці і нова вправа (її можна змінювати скільки завгодно).</div>
+</header>
+<div class="bar2" id="bar"></div>
+<div class="toc" id="toc"></div>
+<div id="main"></div>
+<div class="navb" id="navb" hidden><button class="btn alt" id="back">◀ Назад</button><span class="cnt" id="cnt"></span><button class="btn" id="fwd">Вперед ▶</button></div>
+<footer class="hint" style="text-align:center;margin-top:8px">© Сидорчук Н.В., 2026</footer>
+</div>
+
+<script>/* ===== Перетворення графіків: спільний рушій (дошка + учнівський) ===== */
+const NS='http://www.w3.org/2000/svg';
+function sv(tag,a,par){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(par)par.appendChild(e);return e}
+function hEl(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+let UID=0;
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+function tween(owner,dur,fn){const tok=owner._tok=(owner._tok||0)+1;
+  return new Promise(r=>{const t0=performance.now();
+    function f(now){if(owner._tok!==tok)return r(false);const t=Math.min(1,(now-t0)/dur);fn(ease(t));t<1?requestAnimationFrame(f):r(true)}
+    requestAnimationFrame(f)})}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const rint=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function rng(a,b,st){const r=[];for(let x=a;x<=b+1e-9;x+=st)r.push(+x.toFixed(6));return r}
+const mapP=(polys,f)=>polys.map(p=>p.map(f));
+const shiftP=(polys,dx,dy)=>mapP(polys,([x,y])=>[x+dx,y+dy]);
+function dens(pts,n=30){const r=[];for(let i=0;i<pts.length-1;i++){const[a,b]=pts[i],[c,d]=pts[i+1];for(let j=0;j<n;j++){const t=j/n;r.push([a+(c-a)*t,b+(d-b)*t])}}r.push(pts[pts.length-1].slice());return[r]}
+
+/* ---------- запис формул ---------- */
+const V=t=>`<i class="v">${t}</i>`;
+const nw=t=>`<span class="nw">${t}</span>`;
+const M=n=>n<0?'−'+(-n):''+n;
+const FR=(a,b)=>`<span class="fr"><span>${a}</span><span>${b}</span></span>`;
+const RT=t=>`<span class="rt">√<span>${t}</span></span>`;
+const HALF=FR(1,2);
+const hl=(t,on)=>on?`<span class="pa">${t}</span>`:t;
+function ARG(a,on){return a===0?V('x'):`${V('x')} ${a>0?'+':'−'} ${hl(Math.abs(a),on)}`}
+function TAIL(b,on){return b===0?'':` ${b>0?'+':'−'} ${hl(Math.abs(b),on)}`}
+const fx=nw(V('f')+'('+V('x')+')');
+const PT=(n,x,y)=>nw(`${n}(${M(x)};&nbsp;${M(y)})`);
+const OX=V('Ox'),OY=V('Oy');
+
+const BASES={
+  sq:{la:[2,4],nm:'параболу',polys:()=>[rng(-14,14,.05).map(x=>[x,x*x])],tex:a=>a?`(${ARG(a.v,a.h)})<sup>2</sup>`:`${V('x')}<sup>2</sup>`,
+      key:[[-2,4],[-1,1],[0,0],[1,1],[2,4]],view:{x0:-7,x1:7,y0:-6,y1:8},lab:1.5,start:'Вершину'},
+  sqrt:{la:[6.25,2.5],nm:'графік',polys:()=>[rng(0,6.2,.02).map(t=>[t*t,t])],tex:a=>RT(a?ARG(a.v,a.h):V('x')),
+      key:[[0,0],[1,1],[4,2]],view:{x0:-6,x1:10,y0:-5,y1:7},lab:6.25,start:'Початкову точку'},
+  hyp:{la:[2,2],nm:'гіперболу',polys:()=>{const L=rng(Math.log(.06),Math.log(40),.02).map(Math.exp);return[L.map(x=>[x,4/x]),L.map(x=>[-x,-4/x])]},
+      tex:a=>FR(4,a?ARG(a.v,a.h):V('x')),key:[[1,4],[2,2],[4,1],[-1,-4],[-2,-2],[-4,-1]],view:{x0:-8,x1:8,y0:-7,y1:7},lab:5}
+};
+/* y = base(x + a) + b */
+function FX(base,a,b,h){return nw(`${V('y')} = ${BASES[base].tex(a?{v:a,h}:null)}${TAIL(b,h)}`)}
+const BN=(base)=>`${BASES[base].nm} ${FX(base,0,0)}`;
+
+/* ---------- координатна площина ---------- */
+class Plot{
+  constructor(host,o){o=Object.assign({x0:-6,x1:6,y0:-6,y1:6,u:40},o);Object.assign(this,o);
+    const W=this.W=(o.x1-o.x0)*o.u,H=this.H=(o.y1-o.y0)*o.u;
+    const s=this.svg=sv('svg',{viewBox:`0 0 ${W} ${H}`,class:'plot'});host.appendChild(s);
+    const id='cp'+(++UID),defs=sv('defs',{},s),cp=sv('clipPath',{id},defs);sv('rect',{x:0,y:0,width:W,height:H},cp);
+    sv('rect',{x:0,y:0,width:W,height:H,class:'pbg'},s);
+    const gg=sv('g',{class:'grid'},s);
+    for(let x=Math.ceil(o.x0);x<=o.x1;x++)sv('line',{x1:this.X(x),y1:0,x2:this.X(x),y2:H},gg);
+    for(let y=Math.ceil(o.y0);y<=o.y1;y++)sv('line',{x1:0,y1:this.Y(y),x2:W,y2:this.Y(y)},gg);
+    const ax=sv('g',{class:'axes'},s),fs=Math.round(clamp(o.u*.42,12,19)),X0=this.X(0),Y0=this.Y(0);
+    const txt=(x,y,t,a,c)=>{const e=sv('text',{x,y,'text-anchor':a||'middle',class:c||'num','font-size':fs},ax);e.textContent=t;return e};
+    if(o.y0<0&&o.y1>0){sv('line',{x1:0,y1:Y0,x2:W-3,y2:Y0},ax);sv('polygon',{points:`${W},${Y0} ${W-13},${Y0-5.5} ${W-13},${Y0+5.5}`},ax);
+      txt(W-8,Y0-9,'x','end','an');
+      for(let x=Math.ceil(o.x0+.5);x<=o.x1-.6;x++)if(x&&x%(o.lab||1)===0)txt(this.X(x),Y0+fs+2,M(x))}
+    if(o.x0<0&&o.x1>0){sv('line',{x1:X0,y1:H,x2:X0,y2:3},ax);sv('polygon',{points:`${X0},0 ${X0-5.5},13 ${X0+5.5},13`},ax);
+      txt(X0+9,fs,'y','start','an');
+      for(let y=Math.ceil(o.y0+.5);y<=o.y1-.6;y++)if(y&&y%(o.lab||1)===0)txt(X0-5,this.Y(y)+fs*.36,M(y),'end')}
+    if(o.y0<0&&o.y1>0&&o.x0<0&&o.x1>0)txt(X0-5,Y0+fs+1,'0','end');
+    this.g=sv('g',{'clip-path':`url(#${id})`},s);this.top=sv('g',{},s);
+  }
+  X(x){return(x-this.x0)*this.u}
+  Y(y){return(this.y1-y)*this.u}
+  d(polys){let s='';for(const p of polys){let pen=false;for(const[x,y]of p){if(!isFinite(x)||!isFinite(y)||Math.abs(y)>200||Math.abs(x)>200){pen=false;continue}
+    s+=(pen?'L':'M')+this.X(x).toFixed(1)+','+this.Y(y).toFixed(1);pen=true}}return s}
+  path(polys,cls,par){return sv('path',{d:this.d(polys),class:'crv '+(cls||'')},par||this.g)}
+  dot(x,y,cls,par,r){return sv('circle',{cx:this.X(x),cy:this.Y(y),r:r||6.5,class:'pt '+(cls||'')},par||this.top)}
+  label(x,y,t,cls,dx=8,dy=-8,par){const e=sv('text',{x:this.X(x)+dx,y:this.Y(y)+dy,class:'lab '+(cls||'')},par||this.top);e.innerHTML=t;return e}
+  arrow(x1,y1,x2,y2,cls,par){const a=this.X(x1),b=this.Y(y1),c=this.X(x2),d=this.Y(y2),L=Math.hypot(c-a,d-b);const g=sv('g',{class:'arr '+(cls||'')},par||this.g);
+    if(L<4)return g;const ux=(c-a)/L,uy=(d-b)/L,hs=Math.min(13,L*.5);
+    sv('line',{x1:a,y1:b,x2:c-ux*hs*.8,y2:d-uy*hs*.8},g);
+    sv('polygon',{points:`${c},${d} ${c-ux*hs-uy*hs*.45},${d-uy*hs+ux*hs*.45} ${c-ux*hs+uy*hs*.45},${d-uy*hs-ux*hs*.45}`},g);return g}
+  flab(x,y,html,cls,par){const X=this.X(x),Y=this.Y(y),w=360,h=46,left=X>this.W*.6;
+    const fo=sv('foreignObject',{x:clamp(left?X-w-12:X+12,2,this.W-w-2),y:clamp(Y-h-2,2,this.H-h-2),width:w,height:h},par||this.top);
+    const d=document.createElement('div');d.className='fl '+(cls||'');d.style.textAlign=left?'right':'left';d.innerHTML=html;fo.appendChild(d);return fo}
+  toU(e){const p=this.svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const q=p.matrixTransform(this.svg.getScreenCTM().inverse());return[this.x0+q.x/this.u,this.y1-q.y/this.u]}
+}
+
+/* графік, який перетягують (зсув уздовж осей) */
+function dragCurve(P,polys,o){o=Object.assign({axis:'xy',lim:[-5,5,-5,5],cls:'c-new'},o);
+  const g=sv('g',{class:'dragc'},P.g),vis=sv('path',{class:'crv '+o.cls},g);
+  const st={dx:0,dy:0,locked:false,_tok:0};
+  const draw=()=>{vis.setAttribute('d',P.d(shiftP(polys,st.dx,st.dy)));o.onmove&&o.onmove(st)};draw();
+  P.svg.classList.add('dragable');let s0=null;
+  P.svg.addEventListener('pointerdown',e=>{if(st.locked)return;e.preventDefault();P.svg.setPointerCapture(e.pointerId);const[x,y]=P.toU(e);s0={x,y,dx:st.dx,dy:st.dy};st._tok++;g.classList.add('drag');vis.classList.remove('right','wrong')});
+  P.svg.addEventListener('pointermove',e=>{if(!s0)return;const[x,y]=P.toU(e);
+    if(o.axis!=='y')st.dx=clamp(s0.dx+x-s0.x,o.lim[0],o.lim[1]);if(o.axis!=='x')st.dy=clamp(s0.dy+y-s0.y,o.lim[2],o.lim[3]);draw()});
+  const up=()=>{if(!s0)return;s0=null;g.classList.remove('drag');api.set(Math.round(st.dx),Math.round(st.dy),true).then(()=>o.onchange&&o.onchange(st))};
+  P.svg.addEventListener('pointerup',up);P.svg.addEventListener('pointercancel',up);
+  const api={st,vis,draw,set(dx,dy,anim){const a=st.dx,b=st.dy;if(!anim){st._tok=(st._tok||0)+1;st.dx=dx;st.dy=dy;draw();return Promise.resolve()}
+      return tween(st,Math.max(180,Math.hypot(dx-a,dy-b)*160),t=>{st.dx=a+(dx-a)*t;st.dy=b+(dy-b)*t;draw()})},
+    mark(ok){vis.classList.toggle('right',ok);vis.classList.toggle('wrong',!ok)},clear(){vis.classList.remove('right','wrong')}};
+  return api}
+
+/* ламана з вершинами, які перетягують вертикально */
+function builder(P,start,target,o){o=o||{};
+  const g=sv('g',{class:'bld'},P.top),line=sv('path',{class:'crv c-new'},P.g);
+  const pts=start.map(p=>p.slice()),st={locked:false};
+  const draw=()=>{line.setAttribute('d',P.d([pts]));pts.forEach((p,i)=>{cs[i].setAttribute('cy',P.Y(p[1]));hs[i].setAttribute('cy',P.Y(p[1]))})};
+  const cs=[],hs=[];
+  pts.forEach((p,i)=>{const c=sv('circle',{cx:P.X(p[0]),cy:P.Y(p[1]),r:8.5,class:'vtx'},g);const hh=sv('circle',{cx:P.X(p[0]),cy:P.Y(p[1]),r:24,class:'vhit'},g);cs.push(c);hs.push(hh);
+    let on=false;
+    hh.addEventListener('pointerdown',e=>{if(st.locked)return;e.preventDefault();e.stopPropagation();hh.setPointerCapture(e.pointerId);on=true;c.classList.add('act');c.classList.remove('right','wrong');line.classList.remove('right','wrong')});
+    hh.addEventListener('pointermove',e=>{if(!on)return;const[,y]=P.toU(e);pts[i][1]=clamp(Math.round(y),Math.ceil(P.y0),Math.floor(P.y1));draw()});
+    const up=()=>{on=false;c.classList.remove('act')};hh.addEventListener('pointerup',up);hh.addEventListener('pointercancel',up)});
+  draw();
+  return{st,
+    check(){let ok=true;pts.forEach((p,i)=>{const r=p[1]===target[i][1];cs[i].classList.toggle('right',r);cs[i].classList.toggle('wrong',!r);if(!r)ok=false});
+      line.classList.toggle('right',ok);line.classList.toggle('wrong',!ok);return ok},
+    solve(){const a=pts.map(p=>p[1]);cs.forEach(c=>c.classList.remove('wrong'));line.classList.remove('wrong');
+      return tween(st,700,t=>{pts.forEach((p,i)=>p[1]=a[i]+(target[i][1]-a[i])*t);draw()}).then(()=>{pts.forEach((p,i)=>p[1]=target[i][1]);draw();this.check()})},
+    overlay(){P.path([target],'c-ok')},
+    reset(){st._tok=(st._tok||0)+1;start.forEach((p,i)=>pts[i][1]=p[1]);cs.forEach(c=>c.classList.remove('right','wrong'));line.classList.remove('right','wrong');draw()}}}
+
+/* ---------- поля введення ---------- */
+const N=(a,w)=>`<input class="num${w?' '+w:''}" data-a="${M(a)}" inputmode="none" autocomplete="off">`;
+function SEL(a,opts,cls){return`<select class="sel ${cls||''}" data-a="${a}"><option value=""></option>${opts.map(x=>`<option>${x}</option>`).join('')}</select>`}
+const DIRV=['вгору','вниз'],DIRH=['вліво','вправо'],AX=['Ox','Oy'],SG=['+','−'],LET=['А','Б','В','Г'];
+const PTIN=(n,x,y)=>nw(`${n}(${N(x,'s')}<span class="sc">;</span>${N(y,'s')})`);
+
+/* ---------- маленькі графіки ламаних ---------- */
+function panel(host,pts,cls,cap,view){const w=hEl('div','pan');host.appendChild(w);
+  const P=new Plot(w,Object.assign({x0:-5,x1:5,y0:-5,y1:5,u:30,lab:2},view||{}));P.path(dens(pts,2),cls);pts.forEach(p=>P.dot(p[0],p[1],cls+' sm',P.top,4.5));
+  w.appendChild(hEl('div','pcap',cap));return P}
+
+/* ================= ВПРАВИ ================= */
+const tf={ neg:p=>[p[0],-p[1]], negx:p=>[-p[0],p[1]], both:p=>[-p[0],-p[1]] };
+const SYMF=[nw(`${V('y')} = −${fx}`),nw(`${V('y')} = ${V('f')}(−${V('x')})`),nw(`${V('y')} = −${V('f')}(−${V('x')})`)];
+const KF=[nw(`${V('y')} = 2${fx}`),nw(`${V('y')} = ${V('f')}(2${V('x')})`),nw(`${V('y')} = ${HALF}${fx}`),nw(`${V('y')} = ${V('f')}(${HALF}${V('x')})`)];
+const legend=(opts,big)=>`<div class="legend${big?' big':''}">${big?'<span class="lgh">Формули:</span>':''}${opts.map((o,i)=>`<span><b>${LET[i]})</b> ${o}</span>`).join('')}</div>`;
+const PSEL=(i,a,n)=>`<span class="nw"><b class="cn c${i+1}">${i+1}</b> <b>Відповідь:</b> ${SEL(a,LET.slice(0,n))}</span>`;
+function randPoly(xs,ys){return xs.map(x=>[x,pick(ys)])}
+const same=(a,b)=>a.length===b.length&&a.every((p,i)=>p[0]===b[i][0]&&p[1]===b[i][1]);
+const sortX=a=>a.slice().sort((p,q)=>p[0]-q[0]);
+
+const KINDS={
+/* 1. Перетягни графік (вгору/вниз) */
+K1:{sec:1,name:'Перетягни графік уздовж осі Oy',
+  fixed:{base:'sq',b:-3},
+  rand(){return{base:pick(['sq','sqrt','hyp']),b:pick([-4,-3,-2,-1,1,2,3,4])}},
+  cond:d=>`Перетягни ${BN(d.base)} так, щоб отримати графік функції ${FX(d.base,0,d.b)}.`,
+  build(T,d){const B=BASES[d.base],P=new Plot(T.fig,B.view);P.path(B.polys(),'c-ghost');
+    const dc=dragCurve(P,B.polys(),{axis:'y',lim:[0,0,-5,5]});
+    T.work.innerHTML=`<div class="line">${FX(d.base,0,d.b)}, &nbsp;${V('b')} = ${N(d.b)}</div>
+    <div class="answer"><b>Відповідь:</b> ${BASES[d.base].nm} ${FX(d.base,0,0)} перенесли ${SEL(d.b>0?'вгору':'вниз',DIRV)} на ${N(Math.abs(d.b))}&nbsp;од.</div>`;
+    return{items:[{check(){const ok=Math.round(dc.st.dy)===d.b;dc.mark(ok);return ok},solve(){return dc.set(0,d.b,true).then(()=>dc.mark(true))},
+      overlay(){P.path(shiftP(B.polys(),0,d.b),'c-ok')},reset(){dc.set(0,0);dc.clear()},lock(v){dc.st.locked=v}}]}},
+  ans:d=>`${FX(d.base,0,d.b)}: ${V('b')} = ${M(d.b)}, тому графік переносимо ${d.b>0?'вгору':'вниз'} на ${Math.abs(d.b)}&nbsp;од.`},
+
+/* 2. Знайди формулу кожного графіка (вгору/вниз) */
+K2:{sec:1,name:'Добери формулу до графіка',
+  fixed:{base:'sqrt',bs:[2,-1,-3],opts:[-1,2,1,-3]},
+  rand(){const base=pick(['sq','sqrt']);const v=shuffle([-3,-2,-1,0,1,2,3]);return{base,bs:v.slice(0,3),opts:shuffle(v.slice(0,4))}},
+  cond:d=>`На рисунку графіки функцій виду ${nw(`${V('y')} = ${fx} + ${V('b')}`)}, де ${FX(d.base,0,0)}. Добери до кожного графіка його формулу.`,
+  build(T,d){const B=BASES[d.base],P=new Plot(T.fig,B.view);P.path(B.polys(),'c-ghost');
+    d.bs.forEach((b,i)=>{P.path(shiftP(B.polys(),0,b),'c'+(i+1));const y=(d.base==='sq'?B.lab*B.lab:d.base==='sqrt'?Math.sqrt(B.lab):4/B.lab)+b;
+      sv('circle',{cx:P.X(B.lab),cy:P.Y(y),r:15,class:'tag c'+(i+1)},P.top);const t=sv('text',{x:P.X(B.lab),y:P.Y(y)+6,class:'tagt'},P.top);t.textContent=i+1});
+    T.work.innerHTML=`<div class="line">Формули:</div>${legend(d.opts.map(b=>FX(d.base,0,b)))}
+    <div class="note">Пунктиром показано графік ${FX(d.base,0,0)}.</div>
+    <div class="answer"><b>Відповідь:</b> ${d.bs.map((b,i)=>`<span class="nw"><b class="cn c${i+1}">${i+1}</b> — ${SEL(LET[d.opts.indexOf(b)],LET.slice(0,4))}</span>`).join('&ensp;')}</div>`},
+  ans:d=>d.bs.map((b,i)=>`${i+1} — ${LET[d.opts.indexOf(b)]}) ${FX(d.base,0,b)}`).join('; ')},
+
+/* 3. Перетягни графік (вліво/вправо) */
+K3:{sec:2,name:'Перетягни графік уздовж осі Ox',
+  fixed:{base:'sq',a:2},
+  rand(){return{base:pick(['sq','sqrt','hyp']),a:pick([-4,-3,-2,-1,1,2,3,4])}},
+  cond:d=>`Перетягни ${BN(d.base)} так, щоб отримати графік функції ${FX(d.base,d.a,0)}.`,
+  build(T,d){const B=BASES[d.base],P=new Plot(T.fig,B.view);P.path(B.polys(),'c-ghost');
+    const dc=dragCurve(P,B.polys(),{axis:'x',lim:[-5,5,0,0]});
+    T.work.innerHTML=`<div class="line">${FX(d.base,d.a,0)}, &nbsp;${V('a')} = ${N(d.a)}</div>
+    <div class="answer"><b>Відповідь:</b> ${BASES[d.base].nm} ${FX(d.base,0,0)} перенесли ${SEL(d.a>0?'вліво':'вправо',DIRH)} на ${N(Math.abs(d.a))}&nbsp;од.</div>`;
+    return{items:[{check(){const ok=Math.round(dc.st.dx)===-d.a;dc.mark(ok);return ok},solve(){return dc.set(-d.a,0,true).then(()=>dc.mark(true))},
+      overlay(){P.path(shiftP(B.polys(),-d.a,0),'c-ok')},reset(){dc.set(0,0);dc.clear()},lock(v){dc.st.locked=v}}]}},
+  ans:d=>`${FX(d.base,d.a,0)}: ${V('a')} = ${M(d.a)}, тому графік переносимо ${d.a>0?'вліво':'вправо'} на ${Math.abs(d.a)}&nbsp;од. (знак «+» — вліво, «−» — вправо).`},
+
+/* 4. Куди переходить точка при зсуві вздовж Ox */
+K4:{sec:2,name:'Куди переходить точка',
+  fixed:{A:[1,3],s:[-4,2]},
+  rand(){const A=[pick([-2,-1,1,2]),pick([-2,-1,1,2,3])];const s1=pick([-4,-3,-2,2,3,4]);const s2=-Math.sign(s1)*rint(1,3);return{A,s:[s1,s2]}},
+  cond:d=>`Точка ${PT('A',...d.A)} належить графіку функції ${nw(V('y')+' = '+fx)}. Яка точка обов'язково належить графіку функції<br>а) ${nw(`${V('y')} = ${V('f')}(${ARG(d.s[0])})`)}; &nbsp;б) ${nw(`${V('y')} = ${V('f')}(${ARG(d.s[1])})`)}?`,
+  build(T,d){const P=new Plot(T.fig,{x0:-7,x1:7,y0:-4,y1:7,u:44});const[ax,ay]=d.A;P.dot(ax,ay,'c-base');P.label(ax,ay,'A','',8,-10);
+    const an=sv('g',{class:'ann'},P.top);
+    T.work.innerHTML=d.s.map((s,i)=>`<div class="line">${'аб'[i]}) ${nw(`${V('y')} = ${V('f')}(${ARG(s)})`)}: графік переносимо ${SEL(s>0?'вліво':'вправо',DIRH)} на ${Math.abs(s)}&nbsp;од.</div>`).join('')+
+    `<div class="note">Ордината точки не змінюється, абсциса змінюється на ${Math.abs(d.s[0])} і ${Math.abs(d.s[1])}.</div>
+    <div class="answer"><b>Відповідь:</b> а) ${PTIN('A<sub>1</sub>',ax-d.s[0],ay)}; &nbsp;б) ${PTIN('A<sub>2</sub>',ax-d.s[1],ay)}.</div>`;
+    const show=()=>{an.innerHTML='';d.s.forEach((s,i)=>{const o={t:0};const g=sv('g',{},an);
+      tween(o,800,t=>{g.innerHTML='';P.arrow(ax,ay,ax-s*t,ay,'a-new',g);if(t>.99){P.dot(ax-s,ay,'c-new',g);P.label(ax-s,ay,'A'+'₁₂'[i],'',-12,-12,g)}})})};
+    return{after(all){if(all)show()},solveHook:show,resetHook(){an.innerHTML=''}}},
+  ans:d=>`а) ${PT('A<sub>1</sub>',d.A[0]-d.s[0],d.A[1])}; б) ${PT('A<sub>2</sub>',d.A[0]-d.s[1],d.A[1])} — абсциса змінюється на −${V('a')}, ордината та сама.`},
+
+/* 5. Симетричні графіки: добери формулу */
+K5:{sec:3,name:'Симетрія: добери формулу',
+  fixed:{f:[[-3,-1],[-1,3],[3,1]],perm:[1,0]},
+  rand(){let f;do{const xs=pick([[-4,-1,3],[-3,0,3],[-4,0,2],[-3,-1,4],[-2,1,4],[-4,1,3]]);f=xs.map(x=>[x,rint(-3,3)])}
+    while(!f.some(p=>p[1]<0)||!f.some(p=>p[1]>0)||[tf.neg,tf.negx].some(t=>same(sortX(f.map(t)),f)));return{f,perm:shuffle([0,1])}},
+  cond:d=>`Перший рисунок — графік функції ${nw(V('y')+' = '+fx)}. Під графіками 1 і 2 вибери букву їхньої формули.`,
+  build(T,d){const F2=SYMF.slice(0,2);T.fig.innerHTML=legend(F2,true);const g=hEl('div','pans p3');T.fig.appendChild(g);panel(g,d.f,'c-base',FX0());
+    d.perm.forEach((k,i)=>panel(g,sortX(d.f.map([tf.neg,tf.negx][k])),'c'+(i+1),PSEL(i,LET[k],2)));
+    T.work.innerHTML=`<div class="note">${nw(`${V('y')} = −${fx}`)} — симетрія відносно осі ${OX}; &ensp;${nw(`${V('y')} = ${V('f')}(−${V('x')})`)} — симетрія відносно осі ${OY}.</div>`},
+  ans:d=>d.perm.map((k,i)=>`${i+1} — ${LET[k]}) ${SYMF[k]}`).join('; ')},
+
+/* 6. Симетрія точки */
+K6:{sec:3,name:'Симетрія точки',
+  fixed:{A:[3,-2]},
+  rand(){return{A:[pick([-4,-3,-2,-1,1,2,3,4]),pick([-3,-2,-1,1,2,3])]}},
+  cond:d=>`Точка ${PT('A',...d.A)} належить графіку функції ${nw(V('y')+' = '+fx)}. Яка точка обов'язково належить графіку функції а) ${SYMF[0]}; б) ${SYMF[1]}?`,
+  build(T,d){const P=new Plot(T.fig,{x0:-6,x1:6,y0:-5,y1:5,u:44});const[x,y]=d.A;P.dot(x,y,'c-base');P.label(x,y,'A','',8,-10);
+    const an=sv('g',{class:'ann'},P.top);
+    T.work.innerHTML=`<div class="line">а) ${SYMF[0]} — симетрія відносно осі ${SEL('Ox',AX)}</div>
+    <div class="line">б) ${SYMF[1]} — симетрія відносно осі ${SEL('Oy',AX)}</div>
+    <div class="answer"><b>Відповідь:</b> а) ${PTIN('B',x,-y)}; &nbsp;б) ${PTIN('C',-x,y)}.</div>`;
+    const show=()=>{an.innerHTML='';[[x,-y,'B'],[-x,y,'C']].forEach(([u,w,n],i)=>{const o={},g=sv('g',{},an);
+      tween(o,800,t=>{g.innerHTML='';sv('line',{x1:P.X(x),y1:P.Y(y),x2:P.X(x+(u-x)*t),y2:P.Y(y+(w-y)*t),class:'dash c'+(i+1)},g);
+        if(t>.99){P.dot(u,w,'c'+(i+1),g);P.label(u,w,n,'',8,-10,g)}})})};
+    return{after(all){if(all)show()},solveHook:show,resetHook(){an.innerHTML=''}}},
+  ans:d=>`а) ${PT('B',d.A[0],-d.A[1])} — змінюємо знак ординати; б) ${PT('C',-d.A[0],d.A[1])} — змінюємо знак абсциси.`},
+
+/* 7. Побудуй y = k f(x) */
+K7:{sec:4,name:'Побудуй графік y = k·f(x)',
+  fixed:{f:[[-4,1],[0,2],[4,-1]],k:2},
+  rand(){const k=pick([2,3,.5]);const ys=k===2?[-2,-1,1,2]:k===3?[-1,1]:[-4,-2,2,4];let f;
+    do f=randPoly(pick([[-4,0,4],[-4,-1,3],[-3,1,4]]),ys.concat([0]));while(f.filter(p=>p[1]).length<2);return{f,k}},
+  cond:d=>`Синя пунктирна ламана — графік ${nw(V('y')+' = '+fx)}. Перетягни вершини оранжевої ламаної так, щоб отримати графік ${KT(d.k)}.`,
+  build(T,d){const P=new Plot(T.fig,{x0:-5,x1:5,y0:-5,y1:5,u:50});P.path([d.f],'c-ghost c-blue');
+    const b=builder(P,d.f,d.f.map(p=>[p[0],p[1]*d.k]));const n=d.k<1?2:d.k;
+    T.work.innerHTML=`<div class="line">Точка ${nw(`(${V('x')};&nbsp;${V('y')})`)} переходить у точку ${nw(`(${V('x')};&nbsp;${d.k<1?HALF:d.k}${V('y')})`)}:</div>
+    <div class="line">ординати всіх точок ${SEL(d.k>1?'множимо':'ділимо',['множимо','ділимо'])} на ${N(n)}</div>
+    <div class="answer"><b>Відповідь:</b> графік ${KT(d.k)} отримали ${SEL(d.k>1?'розтягом від':'стиском до',['розтягом від','стиском до'])} осі ${OX} у ${N(n)}&nbsp;рази.</div>`;
+    return{items:[Object.assign(b,{lock(v){b.st.locked=v}})]}},
+  ans:d=>`${KT(d.k)}: ординати ${d.k>1?'множимо':'ділимо'} на ${d.k<1?2:d.k} — ${d.k>1?'розтяг від':'стиск до'} осі ${OX} у ${d.k<1?2:d.k}&nbsp;рази.`},
+
+/* 8. k f(x) чи f(kx): добери формулу */
+K8:{sec:4,name:'Розтяг і стиск: добери формулу',
+  fixed:{f:[[-4,0],[0,2],[4,-2]],perm:[1,2,0]},
+  rand(){let f;do f=randPoly([-4,0,4],[-2,0,2]);while(f.filter(p=>p[1]).length<2||same(f,f.map(tf.negx).reverse()));return{f,perm:shuffle([0,1,2])}},
+  cond:d=>`Перший рисунок — графік функції ${nw(V('y')+' = '+fx)}. Під графіками 1, 2, 3 вибери букву їхньої формули.`,
+  build(T,d){T.fig.innerHTML=legend(KF,true);const g=hEl('div','pans');T.fig.appendChild(g);panel(g,d.f,'c-base',FX0());
+    const T3=[p=>[p[0],2*p[1]],p=>[p[0]/2,p[1]],p=>[p[0],p[1]/2]];
+    d.perm.forEach((k,i)=>panel(g,d.f.map(T3[k]),'c'+(i+1),PSEL(i,LET[k],4)));
+    T.work.innerHTML=`<div class="note">${nw(`${V('y')} = ${V('k')}${fx}`)} — змінюються ординати (уздовж ${OY}); &ensp;${nw(`${V('y')} = ${V('f')}(${V('k')}${V('x')})`)} — змінюються абсциси (уздовж ${OX}).</div>`},
+  ans:d=>d.perm.map((k,i)=>`${i+1} — ${LET[k]}) ${KF[k]}`).join('; ')},
+
+/* 9. Побудуй y = |f(x)| */
+K9:{sec:5,name:'Побудуй графік y = |f(x)|',
+  fixed:{f:[[-4,2],[-2,0],[1,-3],[4,0]]},
+  rand(){const xs=pick([[-4,-2,1,4],[-4,-1,2,4],[-5,-2,1,4],[-4,-1,1,4]]),s=pick([1,-1]);
+    return{f:xs.map((x,i)=>[x,[s*rint(1,3),0,-s*rint(1,3),-s*rint(0,2)][i]])}},
+  cond:d=>`Синя пунктирна ламана — графік ${nw(V('y')+' = '+fx)}. Перетягни вершини оранжевої ламаної так, щоб отримати графік ${nw(`${V('y')} = |${fx}|`)}.`,
+  build(T,d){const P=new Plot(T.fig,{x0:-6,x1:6,y0:-4,y1:4,u:50});P.path([d.f],'c-ghost c-blue');
+    const b=builder(P,d.f,d.f.map(p=>[p[0],Math.abs(p[1])]));const ys=d.f.map(p=>Math.abs(p[1]));
+    T.work.innerHTML=`<div class="line">Частину графіка над віссю ${OX} (і на ній) ${SEL('залишаємо',['залишаємо','відображаємо'])}</div>
+    <div class="line">Частину під віссю ${OX} відображаємо симетрично відносно осі ${SEL('Ox',AX)}</div>
+    <div class="answer"><b>Відповідь:</b> для ${nw(`${V('y')} = |${fx}|`)}: ${nw(`${V('y')}<sub>min</sub> = ${N(Math.min(...ys))}`)}, ${nw(`${V('y')}<sub>max</sub> = ${N(Math.max(...ys))}`)}.</div>`;
+    return{items:[Object.assign(b,{lock(v){b.st.locked=v}})]}},
+  ans:d=>{const ys=d.f.map(p=>Math.abs(p[1]));return`Від'ємні ординати змінюють знак, решта — без змін; ${V('y')}<sub>min</sub> = ${Math.min(...ys)}, ${V('y')}<sub>max</sub> = ${Math.max(...ys)}.`}},
+
+/* 10. Побудуй y = f(|x|) */
+K10:{sec:5,name:'Побудуй графік y = f(|x|)',
+  fixed:{f:[[-3,3],[0,1],[3,-2]],q:-3},
+  rand(){const a=pick([2,3,4]);let y0,y1,yl;do{y0=rint(-2,3);y1=rint(-3,3);yl=rint(-3,3)}while(y1===y0||yl===y1);
+    return{f:[[-a,yl],[0,y0],[a,y1]],q:-a}},
+  cond:d=>`Синя пунктирна ламана — графік ${nw(V('y')+' = '+fx)}. Перетягни вершини оранжевої ламаної так, щоб отримати графік ${nw(`${V('y')} = ${V('f')}(|${V('x')}|)`)}.`,
+  build(T,d){const P=new Plot(T.fig,{x0:-5,x1:5,y0:-4,y1:4,u:54});P.path([d.f],'c-ghost c-blue');
+    const val=x=>d.f.find(p=>p[0]===Math.abs(x))[1];const b=builder(P,d.f,d.f.map(p=>[p[0],val(p[0])]));
+    T.work.innerHTML=`<div class="line">Частину графіка при ${nw(V('x')+' ≥ 0')} ${SEL('залишаємо',['залишаємо','стираємо'])}</div>
+    <div class="line">Ліву частину замінюємо симетричною правій відносно осі ${SEL('Oy',AX)}</div>
+    <div class="answer"><b>Відповідь:</b> при ${nw(`${V('x')} = ${M(d.q)}`)} значення функції ${nw(`${V('y')} = ${V('f')}(|${V('x')}|)`)} дорівнює ${N(val(d.q))}.</div>`;
+    return{items:[Object.assign(b,{lock(v){b.st.locked=v}})]}},
+  ans:d=>{const v=d.f.find(p=>p[0]===-d.q)[1];return`Права частина без змін, ліва — її дзеркальна копія; ${nw(`${V('f')}(|${M(d.q)}|) = ${V('f')}(${-d.q}) = ${M(v)}`)}.`}},
+
+/* 11. Парабола: два зсуви */
+K11:{sec:6,name:'Перетягни параболу',
+  fixed:{m:1,n:-4},
+  rand(){let m,n;do{m=rint(-3,3);n=rint(-4,4)}while(!m||!n);return{m,n}},
+  cond:d=>`Перетягни параболу ${FX('sq',0,0)} так, щоб отримати графік функції ${FX('sq',-d.m,d.n)}.`,
+  build(T,d){const B=BASES.sq,P=new Plot(T.fig,B.view);P.path(B.polys(),'c-ghost');
+    const vx=sv('g',{},P.top);const dc=dragCurve(P,B.polys(),{axis:'xy',lim:[-5,5,-5,5],onmove:s=>{vx.innerHTML='';P.dot(s.dx,s.dy,'c-new',vx)}});
+    T.work.innerHTML=`<div class="line">Вершина параболи ${FX('sq',-d.m,d.n)}: ${PTIN('',d.m,d.n)}</div>
+    <div class="answer"><b>Відповідь:</b> параболу ${FX('sq',0,0)} перенесли ${SEL(d.m>0?'вправо':'вліво',DIRH)} на ${N(Math.abs(d.m))}&nbsp;од. і ${SEL(d.n>0?'вгору':'вниз',DIRV)} на ${N(Math.abs(d.n))}&nbsp;од.</div>`;
+    return{items:[{check(){const ok=Math.round(dc.st.dx)===d.m&&Math.round(dc.st.dy)===d.n;dc.mark(ok);return ok},
+      solve(){return dc.set(0,0,true).then(()=>dc.set(d.m,0,true)).then(()=>dc.set(d.m,d.n,true)).then(()=>dc.mark(true))},
+      overlay(){P.path(shiftP(B.polys(),d.m,d.n),'c-ok')},reset(){dc.set(0,0);dc.clear()},lock(v){dc.st.locked=v}}]}},
+  ans:d=>`${FX('sq',-d.m,d.n)}: вершина ${PT('',d.m,d.n)} — перенесення ${d.m>0?'вправо':'вліво'} на ${Math.abs(d.m)} од. і ${d.n>0?'вгору':'вниз'} на ${Math.abs(d.n)} од.`},
+
+/* 12. Формула за графіком */
+K12:{sec:6,name:'Запиши формулу за графіком',
+  fixed:{base:'sqrt',a:3,b:-2},
+  rand(){let a,b;do{a=rint(-4,3);b=rint(-3,3)}while(!a||!b);return{base:pick(['sq','sqrt']),a,b}},
+  cond:d=>`Графік на рисунку отримали з ${d.base==='sq'?'параболи':'графіка'} ${FX(d.base,0,0)} двома паралельними перенесеннями. Запиши його формулу.`,
+  build(T,d){const B=BASES[d.base],P=new Plot(T.fig,B.view);P.path(B.polys(),'c-ghost');P.path(shiftP(B.polys(),-d.a,d.b),'c-new');
+    P.dot(0,0,'c-ghost');P.dot(-d.a,d.b,'c-new');
+    const arg=`${V('x')} ${SEL(d.a>0?'+':'−',SG,'sg')} ${N(Math.abs(d.a),'s')}`;
+    const body=d.base==='sq'?`(${arg})<sup>2</sup>`:RT(arg);
+    T.work.innerHTML=`<div class="line">${BASES[d.base].start} ${PT('',0,0)} перенесено в точку ${PTIN('',-d.a,d.b)}</div>
+    <div class="note">Перенесення вздовж ${OX} на ${V('m')} — це ${nw(V('f')+'('+V('x')+' − '+V('m')+')')}; уздовж ${OY} на ${V('n')} — це ${nw(fx+' + '+V('n'))}.</div>
+    <div class="answer"><b>Відповідь:</b> ${nw(`${V('y')} = ${body} ${SEL(d.b>0?'+':'−',SG,'sg')} ${N(Math.abs(d.b),'s')}`)}</div>`},
+  ans:d=>`${FX(d.base,d.a,d.b)} (точку ${PT('',0,0)} перенесено в ${PT('',-d.a,d.b)}).`}
+};
+function FX0(){return nw(V('y')+' = '+fx)}
+function KT(k){return nw(`${V('y')} = ${k<1?HALF:k}${fx}`)}
+/* ---------- оболонка вправи ---------- */
+const KEYS=['7','8','9','4','5','6','1','2','3','−','0','⌫'];
+const norm=v=>v.replace(/\s/g,'').replace(/[−–—]/g,'-').replace(',','.');
+const numv=v=>{const t=norm(v);return t===''||t==='-'?NaN:parseFloat(t)};
+function makeTask(kid,d,mode){ /* mode: board | prac | exam */
+  const K=KINDS[kid];const root=hEl('div','tk');
+  root.innerHTML=`<p class="cond">${K.cond(d)}</p><div class="tgrid"><div class="tfig"></div><div class="twork"><div class="work"></div></div></div>`;
+  const T={fig:root.querySelector('.tfig'),work:root.querySelector('.work')};
+  const api=K.build(T,d)||{};const items=api.items||[];
+  const tw=root.querySelector('.twork');if(T.fig.querySelector('.pans'))root.classList.add('haspans');
+  const inputs=[...root.querySelectorAll('input.num')],sels=[...root.querySelectorAll('select.sel')];
+  let last=null;
+  if(inputs.length){const kp=hEl('div','keypad');KEYS.forEach(k=>{const b=hEl('button','',k);b.type='button';b.addEventListener('pointerdown',e=>e.preventDefault());
+      b.onclick=()=>{if(R.locked)return;const inp=last||inputs.find(i=>!i.value)||inputs[0];inp.classList.remove('right','wrong');
+        if(k==='⌫')inp.value=inp.value.slice(0,-1);else if(k==='−')inp.value=inp.value.startsWith('−')?inp.value.slice(1):'−'+inp.value;else inp.value+=k;inp.focus()};kp.appendChild(b)});tw.appendChild(kp);
+    inputs.forEach(i=>{i.addEventListener('focus',()=>{last=i;inputs.forEach(j=>j.classList.toggle('foc',j===i))});
+      i.addEventListener('input',()=>{i.classList.remove('right','wrong');i.value=i.value.replace(/-/g,'−').replace(/[^0-9−.,]/g,'')})})}
+  sels.forEach(s=>s.addEventListener('change',()=>s.classList.remove('right','wrong')));
+  const R={root,kid,d,locked:false,
+    check(markEmpty){let ok=0,n=0;
+      inputs.forEach(i=>{n++;if(i.value.trim()===''&&!markEmpty){i.classList.remove('right','wrong');return}const r=numv(i.value)===numv(i.dataset.a);i.classList.toggle('right',r);i.classList.toggle('wrong',!r);if(r)ok++});
+      sels.forEach(s=>{n++;if(s.value===''&&!markEmpty){s.classList.remove('right','wrong');return}const r=s.value===s.dataset.a;s.classList.toggle('right',r);s.classList.toggle('wrong',!r);if(r)ok++});
+      items.forEach(it=>{n++;if(it.check())ok++});
+      api.after&&api.after(ok===n);return{ok,n}},
+    solve(){inputs.forEach(i=>{i.value=i.dataset.a;i.classList.remove('wrong');i.classList.add('right')});sels.forEach(s=>{s.value=s.dataset.a;s.classList.remove('wrong');s.classList.add('right')});
+      items.forEach(it=>it.solve());api.solveHook&&api.solveHook()},
+    overlay(){items.forEach(it=>it.overlay&&it.overlay());api.solveHook&&api.solveHook()},
+    reset(){inputs.forEach(i=>{i.value='';i.classList.remove('right','wrong')});sels.forEach(s=>{s.value='';s.classList.remove('right','wrong')});items.forEach(it=>it.reset());api.resetHook&&api.resetHook()},
+    lock(){R.locked=true;inputs.forEach(i=>i.readOnly=true);sels.forEach(s=>s.disabled=true);items.forEach(it=>it.lock&&it.lock(true));root.classList.add('locked')},
+    tw,ans:K.ans(d)};
+  inputs.forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter'){const b=root.querySelector('[data-check]');b&&b.click()}}));
+  return R}
+
+/* ================= ПОЯСНЕННЯ (анімовані) ================= */
+function stepper(p,lab){return`<span class="stp">${lab} = <button type="button" data-p="${p}" data-d="-1">−</button><output data-o="${p}">0</output><button type="button" data-p="${p}" data-d="1">+</button></span>`}
+function exLayout(host,side){host.innerHTML=`<div class="ex"><div class="ex-side">${side}</div><div class="ex-right"><div class="ex-fig"></div><div class="ex-bot"></div></div></div>`;
+  const r=host.querySelector('.ex-right'),bot=host.querySelector('.ex-bot'),f=host.querySelector('.ex-side [data-f]');if(f)r.prepend(f);
+  host.querySelectorAll('.ex-side .cap,.ex-side .krow,.ex-side .ctl').forEach(e=>bot.appendChild(e));const pl=host.querySelector('[data-play]');if(pl)host.querySelector('.ex-side').appendChild(pl);return host.querySelector('.ex-fig')}
+
+function shiftExplorer(host,o){
+  const st={base:o.bases[0],dx:0,dy:0};
+  const side=`${o.rule}
+   ${o.bases.length>1?`<div class="seg">${o.bases.map(b=>`<button type="button" data-b="${b}">${FX(b,0,0)}</button>`).join('')}</div>`:''}
+   <div class="fbig" data-f></div><div class="cap" data-c></div>
+   <div class="ctl">${o.par.map(p=>stepper(p.k,V(p.k))).join('')}${o.steps?'<button type="button" class="btn alt sm" data-play>▶ Покроково</button>':''}</div>
+   <div class="hint2">✋ Графік можна перетягувати по площині.</div>`;
+  const figH=exLayout(host,side);let P,ghost,dc,ann;
+  const val=k=>{const p=o.par.find(q=>q.k===k);return p.f(st)};
+  function info(){host.querySelector('[data-f]').innerHTML=o.formula(st.base,Math.round(st.dx),Math.round(st.dy));
+    host.querySelector('[data-c]').innerHTML=o.cap(Math.round(st.dx),Math.round(st.dy));
+    o.par.forEach(p=>host.querySelector(`[data-o="${p.k}"]`).textContent=M(p.f({dx:Math.round(st.dx),dy:Math.round(st.dy)})))}
+  function annot(s){ann.innerHTML='';const la=BASES[st.base].la,rx=Math.round(s.dx),ry=Math.round(s.dy);
+    if(Math.abs(s.dx)+Math.abs(s.dy)<.05)return;
+    if(o.vertex){if(Math.abs(s.dx)>.05)P.arrow(0,0,s.dx,0,'a-new',ann);if(Math.abs(s.dy)>.05)P.arrow(s.dx,0,s.dx,s.dy,'a-new',ann);P.dot(0,0,'c-ghost',ann);P.dot(s.dx,s.dy,'c-new',ann);return}
+    BASES[st.base].key.forEach(([x,y])=>{P.arrow(x,y,x+s.dx,y+s.dy,'a-new',ann);P.dot(x,y,'c-ghost',ann,4.5)})}
+  function setup(){figH.innerHTML='';const B=BASES[st.base];P=new Plot(figH,Object.assign({},B.view,o.view||{}));ghost=P.path(B.polys(),'c-ghost');ann=sv('g',{class:'ann'},P.g);
+    dc=dragCurve(P,B.polys(),{axis:o.axis,lim:o.lim,onmove:s=>{st.dx=s.dx;st.dy=s.dy;annot(s);info()}});
+    host.querySelectorAll('[data-b]').forEach(b=>b.classList.toggle('cur',b.dataset.b===st.base))}
+  setup();
+  host.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{st.base=b.dataset.b;st.dx=0;st.dy=0;setup();info()});
+  host.querySelectorAll('.stp button').forEach(b=>b.onclick=()=>{const p=o.par.find(q=>q.k===b.dataset.p);const cur={dx:Math.round(dc.st.dx),dy:Math.round(dc.st.dy)};
+    const nx=p.set(cur,p.f(cur)+ +b.dataset.d);dc.set(clamp(nx.dx,o.lim[0],o.lim[1]),clamp(nx.dy,o.lim[2],o.lim[3]),true)});
+  const pl=host.querySelector('[data-play]');if(pl)pl.onclick=async()=>{const tx=o.demo[0],ty=o.demo[1];await dc.set(0,0,true);await new Promise(r=>setTimeout(r,250));await dc.set(tx,0,true);await new Promise(r=>setTimeout(r,350));await dc.set(tx,ty,true)};
+  info();return{reset(){st.dx=0;st.dy=0;dc.set(0,0)}}}
+
+const RULE=(t,c)=>`<div class="box ${c||''}">${(Array.isArray(t)?t:[t]).map(x=>`<div class="rl">${x}</div>`).join('')}</div>`;
+const EXPL={
+E1:host=>shiftExplorer(host,{axis:'y',lim:[0,0,-4,4],bases:['sq','sqrt','hyp'],
+  rule:RULE([`Графік ${nw(`${V('y')} = ${fx} + ${V('b')}`)} отримуємо з графіка ${nw(`${V('y')} = ${fx}`)}`,
+    `<b class="hl">паралельним перенесенням уздовж осі ${OY}</b> на ${nw('|'+V('b')+'|')} од.:`,
+    `<span class="gr">▲ вгору</span>, якщо ${nw(V('b')+' &gt; 0')};`,`<span class="rd">▼ вниз</span>, якщо ${nw(V('b')+' &lt; 0')}.`,
+    `<span class="muted">Точка ${nw(`(${V('x')};&nbsp;${V('y')})`)} → ${nw(`(${V('x')};&nbsp;${V('y')} + ${V('b')})`)}</span>`]),
+  par:[{k:'b',f:s=>s.dy,set:(s,v)=>({dx:0,dy:v})}],
+  formula:(b,dx,dy)=>FX(b,0,dy,true),
+  cap:(dx,dy)=>dy>0?`<b class="gr">▲ вгору на ${dy}&nbsp;од.</b>`:dy<0?`<b class="rd">▼ вниз на ${-dy}&nbsp;од.</b>`:`графік на місці`}),
+E2:host=>shiftExplorer(host,{axis:'x',lim:[-4,4,0,0],bases:['sq','sqrt','hyp'],
+  rule:RULE([`Графік ${nw(`${V('y')} = ${V('f')}(${V('x')} + ${V('a')})`)} отримуємо з графіка ${nw(`${V('y')} = ${fx}`)}`,
+    `<b class="hl">паралельним перенесенням уздовж осі ${OX}</b> на ${nw('|'+V('a')+'|')} од.:`,
+    `<span class="rd">◀ вліво</span>, якщо ${nw(V('a')+' &gt; 0')};`,`<span class="gr">вправо ▶</span>, якщо ${nw(V('a')+' &lt; 0')}.`,
+    `<span class="muted">Точка ${nw(`(${V('x')};&nbsp;${V('y')})`)} → ${nw(`(${V('x')} − ${V('a')};&nbsp;${V('y')})`)}</span>`])+
+    RULE([`Увага! ${nw(`(${V('x')} <b>+</b> 2)<sup>2</sup>`)} — зсув <b>вліво</b>,`,`${nw(`(${V('x')} <b>−</b> 2)<sup>2</sup>`)} — зсув <b>вправо</b>.`],'warm'),
+  par:[{k:'a',f:s=>-s.dx,set:(s,v)=>({dx:-v,dy:0})}],
+  formula:(b,dx,dy)=>FX(b,-dx,0,true),
+  cap:(dx,dy)=>dx<0?`<b class="rd">◀ вліво на ${-dx}&nbsp;од.</b>`:dx>0?`<b class="gr">вправо на ${dx}&nbsp;од. ▶</b>`:`графік на місці`}),
+E6:host=>shiftExplorer(host,{axis:'xy',lim:[-4,4,-5,5],bases:['sq'],vertex:true,steps:true,demo:[1,-4],view:{x0:-7,x1:7,y0:-6,y1:8},
+  rule:RULE([`Графік ${nw(`${V('y')} = (${V('x')} − ${V('m')})<sup>2</sup> + ${V('n')}`)} — парабола ${FX('sq',0,0)}, перенесена:`,
+    `• уздовж ${OX} на ${V('m')} од. (вправо, якщо ${nw(V('m')+' &gt; 0')});`,`• уздовж ${OY} на ${V('n')} од. (вгору, якщо ${nw(V('n')+' &gt; 0')}).`,
+    `<b class="hl">Вершина параболи: ${nw(`(${V('m')};&nbsp;${V('n')})`)}</b>`])+
+    RULE([`Для будь-якої функції ${nw(`${V('y')} = ${V('f')}(${V('x')} + ${V('a')}) + ${V('b')}`)}:`,`спочатку зсув уздовж ${OX}, потім уздовж ${OY}.`],'soft'),
+  par:[{k:'m',f:s=>s.dx,set:(s,v)=>({dx:v,dy:s.dy})},{k:'n',f:s=>s.dy,set:(s,v)=>({dx:s.dx,dy:v})}],
+  formula:(b,dx,dy)=>FX('sq',-dx,dy,true),
+  cap:(dx,dy)=>`Вершина: <b class="or">${PT('',dx,dy)}</b>`}),
+
+E3:host=>{const f=BASES.sqrt.polys();
+  const side=RULE([`${nw(`${V('y')} = −${fx}`)} — <b class="hl">симетрія відносно осі ${OX}</b>`,`<span class="muted">${nw(`(${V('x')};&nbsp;${V('y')})`)} → ${nw(`(${V('x')};&nbsp;−${V('y')})`)}</span>`])+
+    RULE([`${nw(`${V('y')} = ${V('f')}(−${V('x')})`)} — <b class="hl2">симетрія відносно осі ${OY}</b>`,`<span class="muted">${nw(`(${V('x')};&nbsp;${V('y')})`)} → ${nw(`(−${V('x')};&nbsp;${V('y')})`)}</span>`])+
+    `<div class="seg"><button type="button" data-m="0">${nw(`${V('y')} = ${RT(V('x'))}`)}</button><button type="button" data-m="1">${nw(`${V('y')} = −${RT(V('x'))}`)}</button><button type="button" data-m="2">${nw(`${V('y')} = ${RT('−'+V('x'))}`)}</button></div>
+    <div class="fbig" data-f></div><div class="cap" data-c></div>`;
+  const figH=exLayout(host,side);const P=new Plot(figH,{x0:-8,x1:8,y0:-5,y1:5,u:42});
+  const axl=sv('g',{},P.g);P.path(f,'c-ghost');const cur=P.path(f,'c-new');const an=sv('g',{class:'ann'},P.top);
+  const st={sx:1,sy:1,m3:0};const MS=[[1,1],[1,-1],[-1,1],[-1,-1]];const FS3=[nw(`${V('y')} = ${RT(V('x'))}`),nw(`${V('y')} = −${RT(V('x'))}`),nw(`${V('y')} = ${RT('−'+V('x'))}`),nw(`${V('y')} = −${RT('−'+V('x'))}`)];
+  const CAP=['Вихідний графік. Точка A(4;&nbsp;2) лежить на ньому.','Симетрія відносно осі <b class="hl">Ox</b>: A(4;&nbsp;2) → A′(4;&nbsp;−2)','Симетрія відносно осі <b class="hl2">Oy</b>: A(4;&nbsp;2) → A′(−4;&nbsp;2)','Дві симетрії (відносно Ox і Oy): A(4;&nbsp;2) → A′(−4;&nbsp;−2)'];
+  const draw=()=>{cur.setAttribute('d',P.d(mapP(f,([x,y])=>[x*st.sx,y*st.sy])));an.innerHTML='';
+    const ax=4*st.sx,ay=2*st.sy;sv('line',{x1:P.X(4),y1:P.Y(2),x2:P.X(ax),y2:P.Y(ay),class:'dash'},an);P.dot(4,2,'c-ghost',an);P.label(4,2,'A','',8,-10,an);
+    P.dot(ax,ay,'c-new',an);if(Math.abs(ax-4)+Math.abs(ay-2)>.3)P.label(ax,ay,'A′','',8,ay<0?24:-10,an)};
+  const go=m=>{host.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('cur',+b.dataset.m===m));host.querySelector('[data-c]').innerHTML=CAP[m];st.m3=m;host.querySelector('[data-f]').innerHTML=FS3[m];
+    axl.innerHTML='';if(m===1||m===3)sv('line',{x1:0,y1:P.Y(0),x2:P.W,y2:P.Y(0),class:'symax'},axl);if(m===2||m===3)sv('line',{x1:P.X(0),y1:0,x2:P.X(0),y2:P.H,class:'symax s2'},axl);
+    const a={...st},[tx,ty]=MS[m];tween(st,900,t=>{st.sx=a.sx+(tx-a.sx)*t;st.sy=a.sy+(ty-a.sy)*t;draw()})};
+  host.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>go(+b.dataset.m));draw();go(0);return{reset(){go(0)}}},
+
+E4:host=>{const F=[[-4,0],[-2,2],[4,-1]];
+  const side=RULE([`${nw(`${V('y')} = ${V('k')}${fx}`)}, ${nw(V('k')+' &gt; 0')}:`,`${nw(V('k')+' &gt; 1')} — <b class="hl">розтяг від осі ${OX}</b> у ${V('k')} разів;`,`${nw('0 &lt; '+V('k')+' &lt; 1')} — <b class="hl">стиск до осі ${OX}</b>.`,`<span class="muted">${nw(`(${V('x')};&nbsp;${V('y')})`)} → ${nw(`(${V('x')};&nbsp;${V('k')}${V('y')})`)}</span>`])+
+    RULE([`${nw(`${V('y')} = ${V('f')}(${V('k')}${V('x')})`)}, ${nw(V('k')+' &gt; 0')}:`,`${nw(V('k')+' &gt; 1')} — <b class="hl2">стиск до осі ${OY}</b> у ${V('k')} разів;`,`${nw('0 &lt; '+V('k')+' &lt; 1')} — <b class="hl2">розтяг від осі ${OY}</b>.`,`<span class="muted">${nw(`(${V('x')};&nbsp;${V('y')})`)} → ${nw(`(${FR(V('x'),V('k'))};&nbsp;${V('y')})`)}</span>`])+
+    `<div class="krow"><span>${nw(`${V('y')} = ${V('k')}${fx}`)},&nbsp; ${nw(V('k')+' =')}</span>${[.5,1,2,3].map(k=>`<button type="button" data-k="${k}" data-t="0">${k===.5?HALF:k}</button>`).join('')}</div>
+    <div class="krow"><span>${nw(`${V('y')} = ${V('f')}(${V('k')}${V('x')})`)},&nbsp; ${nw(V('k')+' =')}</span>${[.5,1,2].map(k=>`<button type="button" data-k="${k}" data-t="1">${k===.5?HALF:k}</button>`).join('')}</div>
+    <div class="fbig" data-f></div><div class="cap" data-c></div>`;
+  const figH=exLayout(host,side);const P=new Plot(figH,{x0:-8,x1:8,y0:-3,y1:6,u:42});
+  const fd=dens(F,2);P.path(fd,'c-ghost c-blue');const cur=P.path(fd,'c-new');const an=sv('g',{class:'ann'},P.g);const st={sx:1,sy:1};
+  const draw=()=>{cur.setAttribute('d',P.d(mapP(fd,([x,y])=>[x*st.sx,y*st.sy])));an.innerHTML='';F.forEach(([x,y])=>{P.arrow(x,y,x*st.sx,y*st.sy,'a-new',an);P.dot(x*st.sx,y*st.sy,'c-new',an,5)})};
+  const kt=k=>k===.5?HALF:k;
+  const go=(k,t)=>{host.querySelectorAll('[data-k]').forEach(b=>b.classList.toggle('cur',+b.dataset.k===k&&(+b.dataset.t===t||k===1)));
+    host.querySelector('[data-f]').innerHTML=st.f=k===1?FX0():t===0?nw(`${V('y')} = <span class="pa">${kt(k)}</span>${fx}`):nw(`${V('y')} = ${V('f')}(<span class="pa">${kt(k)}</span>${V('x')})`);
+    host.querySelector('[data-c]').innerHTML=k===1?'Вихідний графік':t===0?(k>1?`Ординати × ${k}: розтяг від осі ${OX} у ${k} рази`:`Ординати : 2 — стиск до осі ${OX} у 2 рази`):(k>1?`Абсциси : ${k} — стиск до осі ${OY} у ${k} рази`:`Абсциси × 2 — розтяг від осі ${OY} у 2 рази`);
+    const tx=t===1?1/k:1,ty=t===0?k:1,a={...st};tween(st,900,u=>{st.sx=a.sx+(tx-a.sx)*u;st.sy=a.sy+(ty-a.sy)*u;draw()})};
+  host.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>go(+b.dataset.k,+b.dataset.t));draw();go(1,0);return{reset(){go(1,0)}}},
+
+E5:host=>{const base=[rng(-6,6,.02).map(x=>[x,(x-2)**2-1])];
+  const F=[nw(`${V('y')} = (${V('x')} − 2)<sup>2</sup> − 1`),nw(`${V('y')} = |(${V('x')} − 2)<sup>2</sup> − 1|`),nw(`${V('y')} = (|${V('x')}| − 2)<sup>2</sup> − 1`)];
+  const side=RULE([`${nw(`${V('y')} = |${fx}|`)}:`,`частину <b class="gr">над віссю ${OX}</b> (і на ній) залишаємо;`,`частину <b class="rd">під віссю ${OX}</b> відображаємо симетрично відносно ${OX}.`])+
+    RULE([`${nw(`${V('y')} = ${V('f')}(|${V('x')}|)`)}:`,`частину <b class="gr">праворуч від ${OY}</b> (${nw(V('x')+' ≥ 0')}) залишаємо;`,`ліву частину <b class="rd">стираємо</b>;`,`будуємо частину, симетричну правій відносно ${OY}.`])+
+    `<div class="seg">${F.map((f,i)=>`<button type="button" data-m="${i}">${f}</button>`).join('')}</div><div class="fbig" data-f></div><div class="cap" data-c></div>`;
+  const figH=exLayout(host,side);const P=new Plot(figH,{x0:-6,x1:6,y0:-3,y1:6,u:50});
+  const ax=sv('g',{},P.g);P.path(base,'c-ghost');const lb=sv('g',{},P.top),fade=P.path([],'c-fade'),cur=P.path(base,'c-new'),cp=P.path([],'c-new');
+  const st={m:0,t:0};const R=base.map(p=>p.filter(q=>q[0]>=0)),L=base.map(p=>p.filter(q=>q[0]<=0));
+  const draw=()=>{const{m,t}=st;fade.setAttribute('d','');cp.setAttribute('d','');
+    if(m===0)cur.setAttribute('d',P.d(base));
+    if(m===1)cur.setAttribute('d',P.d(mapP(base,([x,y])=>[x,y<0?y*(1-2*t):y])));
+    if(m===2){cur.setAttribute('d',P.d(R));fade.setAttribute('d',P.d(L));fade.style.opacity=1-t;cp.setAttribute('d',P.d(mapP(R,([x,y])=>[x*(1-2*t),y])))}};
+  const CAP=['Вихідна парабола: вершина (2;&nbsp;−1).','Частина під віссю Ox «перегорнулася» вгору.','Праву частину відобразили на ліву — графік симетричний відносно Oy.'];
+  async function go(m){host.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('cur',+b.dataset.m===m));host.querySelector('[data-c]').innerHTML=CAP[m];host.querySelector('[data-f]').innerHTML=F[m];
+    ax.innerHTML='';if(m===1)sv('line',{x1:0,y1:P.Y(0),x2:P.W,y2:P.Y(0),class:'symax'},ax);if(m===2)sv('line',{x1:P.X(0),y1:0,x2:P.X(0),y2:P.H,class:'symax s2'},ax);
+    if(st.m!==m&&st.t>0){const t0=st.t;const ok=await tween(st,500,u=>{st.t=t0*(1-u);draw()});if(!ok)return}
+    st.m=m;st.t=0;draw();if(m)tween(st,1100,u=>{st.t=u;draw()})}
+  host.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>go(+b.dataset.m));go(0);return{reset(){go(0)}}}
+};
+const SECS=[['Зсув уздовж Oy',nw(`${V('y')} = ${fx} + ${V('b')}`)],['Зсув уздовж Ox',nw(`${V('y')} = ${V('f')}(${V('x')} + ${V('a')})`)],
+  ['Симетрія',nw(`−${fx}, ${V('f')}(−${V('x')})`)],['Розтяг і стиск',nw(`${V('k')}${fx}, ${V('f')}(${V('k')}${V('x')})`)],
+  ['Модуль',nw(`|${fx}|, ${V('f')}(|${V('x')}|)`)],['Два зсуви',nw(`(${V('x')} − ${V('m')})<sup>2</sup> + ${V('n')}`)]];
+const PLAN=[['E1','K1','K2'],['E2','K3','K4'],['E3','K5','K6'],['E4','K7','K8'],['E5','K9','K10'],['E6','K11','K12']];
+
+/* підсумок: міні-конспект */
+function buildSummary(g,legHost){const x=V('x'),y=V('y'),P=(a,b)=>nw(`(${a};&nbsp;${b})`);
+const sq=[rng(-4,4,.05).map(t=>[t,t*t])],sr=[rng(0,3,.02).map(t=>[t*t,t])],hat=[[[-2,0],[0,2],[2,0]]],ln=[[[-3,-4],[4,3]]];
+const C=[
+ [`${y} = ${fx} + ${V('b')}`,sq,s=>shiftP(s,0,2),`зсув уздовж ${OY}: <b class="gr">вгору</b> при ${nw(V('b')+' &gt; 0')}, <b class="rd">вниз</b> при ${nw(V('b')+' &lt; 0')}`,P(x,`${y} + ${V('b')}`),[[0,0,0,2]]],
+ [`${y} = ${V('f')}(${x} + ${V('a')})`,sq,s=>shiftP(s,-2,0),`зсув уздовж ${OX}: <b class="rd">вліво</b> при ${nw(V('a')+' &gt; 0')}, <b class="gr">вправо</b> при ${nw(V('a')+' &lt; 0')}`,P(`${x} − ${V('a')}`,y),[[0,0,-2,0]]],
+ [`${y} = −${fx}`,sr,s=>mapP(s,tf.neg),`симетрія відносно осі ${OX}`,P(x,'−'+y),[],'ox'],
+ [`${y} = ${V('f')}(−${x})`,sr,s=>mapP(s,tf.negx),`симетрія відносно осі ${OY}`,P('−'+x,y),[],'oy'],
+ [`${y} = ${V('k')}${fx}`,hat,s=>mapP(s,([a,b])=>[a,2*b]),`<b class="hl">розтяг від ${OX}</b> (${nw(V('k')+' &gt; 1')})<br>або стиск до ${OX} (${nw('0 &lt; '+V('k')+' &lt; 1')})`,P(x,V('k')+y),[[0,2,0,4]]],
+ [`${y} = ${V('f')}(${V('k')}${x})`,hat,s=>mapP(s,([a,b])=>[a/2,b]),`<b class="hl2">стиск до ${OY}</b> (${nw(V('k')+' &gt; 1')})<br>або розтяг від ${OY} (${nw('0 &lt; '+V('k')+' &lt; 1')})`,P(FR(x,V('k')),y),[[2,0,1,0],[-2,0,-1,0]]],
+ [`${y} = |${fx}|`,ln,s=>[[[-3,4],[1,0],[4,3]]],`частину <b class="rd">під ${OX}</b> відображаємо вгору відносно ${OX}`,'',[],'ox'],
+ [`${y} = ${V('f')}(|${x}|)`,ln,s=>[[[-4,3],[0,-1],[4,3]]],`праву частину залишаємо і <b class="gr">відображаємо</b> відносно ${OY}`,'',[],'oy']];
+C.forEach(([f,base,tr,txt,pt,arr,ax])=>{const c=hEl('div','mkc',`<div class="mkf">${nw(f)}</div>`);g.appendChild(c);
+  const Pl=new Plot(c,{x0:-4,x1:4,y0:-2,y1:4,u:30});
+  if(ax==='ox')sv('line',{x1:0,y1:Pl.Y(0),x2:Pl.W,y2:Pl.Y(0),class:'symax'},Pl.g);if(ax==='oy')sv('line',{x1:Pl.X(0),y1:0,x2:Pl.X(0),y2:Pl.H,class:'symax s2'},Pl.g);
+  Pl.path(base,'c-ghost c-blue');Pl.path(tr(base),'c-new');arr.forEach(a=>Pl.arrow(...a,'a-new'));
+  c.appendChild(hEl('div','mkt',txt+(pt?`<div class="muted">${P(x,y)} → ${pt}</div>`:'')))});
+legHost.appendChild(hEl('div','mkl',`<span class="lg b"></span> графік ${nw(y+' = '+fx)} &emsp; <span class="lg o"></span> новий графік`));}
+</script><script>(function(){
+const main=document.getElementById('main'),navb=document.getElementById('navb'),cnt=document.getElementById('cnt'),bar=document.getElementById('bar');
+const NS=SECS.length;let sec=-1,idx=0,SCR={};
+function taskCard(kid,n,fresh){const d=fresh?KINDS[kid].rand():KINDS[kid].fixed;const T=makeTask(kid,d,'prac');
+  const c=hEl('div','q',`<div class="qn"><span class="badge ${fresh?'ex':'pr'}">${fresh?'Нова вправа':'Як на уроці'}</span>Вправа ${n}. ${KINDS[kid].name}</div>`);c.appendChild(T.root);
+  const a=hEl('div','actions',`<button class="btn" data-c>Перевірити</button><button class="btn alt" data-r>Стерти</button><button class="btn ghost" data-s>Показати розв'язання</button>${fresh?'<button class="btn alt" data-n>Інша вправа ↻</button>':''}<span class="msg"></span>`);
+  T.tw.appendChild(a);const m=a.querySelector('.msg');
+  a.querySelector('[data-c]').onclick=()=>{const r=T.check(false);m.innerHTML=r.ok===r.n?'<span class="gr">Усе правильно! 🎉</span>':`Правильно ${r.ok} з ${r.n}`};
+  a.querySelector('[data-r]').onclick=()=>{T.reset();m.innerHTML=''};
+  a.querySelector('[data-s]').onclick=()=>{T.solve();m.innerHTML=''};
+  if(fresh)a.querySelector('[data-n]').onclick=()=>{const nc=taskCard(kid,n,true);c.replaceWith(nc);const s=SCR[sec];s[s.indexOf(c)]=nc;nc.hidden=false};
+  return c}
+function buildSec(i){if(SCR[i])return SCR[i];const L=[];
+  if(i===NS){const q=hEl('div','q',`<div class="qn"><span class="badge">Розділ ${NS+1}</span>Міні-конспект</div><h2 class="qt">Підсумок</h2><div class="mk"></div>`);buildSummary(q.querySelector('.mk'),q);L.push(q)}
+  else{const p=PLAN[i];const th=hEl('div','q',`<div class="qn"><span class="badge">Розділ ${i+1}</span>Пояснення</div><h2 class="qt">${SECS[i][0]}: ${SECS[i][1]}</h2><div class="exh"></div>`);
+    EXPL[p[0]](th.querySelector('.exh'));L.push(th);
+    let n=0;p.slice(1).forEach(kid=>{n++;L.push(taskCard(kid,2*n-1,false));L.push(taskCard(kid,2*n,true))})}
+  L.forEach(e=>{e.hidden=true;main.appendChild(e)});return SCR[i]=L}
+function toc(){sec=-1;Object.values(SCR).flat().forEach(e=>e.hidden=true);navb.hidden=true;bar.innerHTML='';document.getElementById('toc').hidden=false;document.getElementById('intro').hidden=false;scrollTo({top:0})}
+function open(i,j){sec=i;document.getElementById('toc').hidden=true;document.getElementById('intro').hidden=true;buildSec(i);show(j||0)}
+function show(j){const L=SCR[sec];idx=clamp(j,0,L.length-1);Object.values(SCR).flat().forEach(e=>e.hidden=true);L[idx].hidden=false;navb.hidden=false;
+  const nm=sec===NS?'Підсумок':`${sec+1}. ${SECS[sec][0]}`;bar.innerHTML=`<button class="btn ghost sm" id="tocb">☰ Зміст</button><b class="secn">${nm}</b>`;
+  document.getElementById('tocb').onclick=toc;
+  cnt.textContent=L.length>1?`${idx+1} / ${L.length}`:'';
+  document.getElementById('back').textContent=idx===0?'◀ Зміст':'◀ Назад';
+  const last=idx===L.length-1;document.getElementById('fwd').textContent=last?(sec<NS?'Наступний розділ ▶':'До змісту'):'Вперед ▶';scrollTo({top:0})}
+document.getElementById('back').onclick=()=>idx===0?toc():show(idx-1);
+document.getElementById('fwd').onclick=()=>{if(idx<SCR[sec].length-1)show(idx+1);else if(sec<NS)open(sec+1);else toc()};
+const t=document.getElementById('toc');
+t.innerHTML=SECS.map((s,i)=>`<button class="tocb" data-s="${i}"><b>${i+1}</b><span>${s[0]}<small>${s[1]}</small></span></button>`).join('')+`<button class="tocb" data-s="${NS}"><b>${NS+1}</b><span>Підсумок<small>міні-конспект</small></span></button>`;
+t.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>open(+b.dataset.s));
+toc();
+})();
+</script></body></html>
