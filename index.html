@@ -267,7 +267,7 @@ footer{padding:12px 0 0;color:#7185a5!important;font-size:13px!important}
 <header>
   <div class="eyebrow">Алгебра 9 · Тренажер</div>
   <h1>Перетворення графіків функцій</h1>
-  <div class="hint" id="intro">Обери розділ. У кожному — пояснення з рухомим графіком, вправа як на уроці і нова вправа (її можна змінювати скільки завгодно).</div>
+  <div class="hint" id="intro">Обери розділ. У кожному — пояснення з рухомим графіком і вправи; кнопка «Оновити» дає нову аналогічну вправу.</div>
 </header>
 <div class="bar2" id="bar"></div>
 <div class="toc" id="toc"></div>
@@ -764,6 +764,11 @@ E5:host=>{const base=[rng(-6,6,.02).map(x=>[x,(x-2)**2-1])];
 const SECS=[['Зсув уздовж Oy',nw(`${V('y')} = ${fx} + ${V('b')}`)],['Зсув уздовж Ox',nw(`${V('y')} = ${V('f')}(${V('x')} + ${V('a')})`)],
   ['Симетрія',nw(`${V('y')} = −${fx}; &nbsp; ${V('y')} = ${V('f')}(−${V('x')})`)],['Розтяг і стиск',nw(`${V('y')} = ${V('k')}${fx}; &nbsp; ${V('y')} = ${V('f')}(${V('k')}${V('x')})`)],
   ['Модуль',nw(`${V('y')} = |${fx}|; &nbsp; ${V('y')} = ${V('f')}(|${V('x')}|)`)],['Два зсуви',nw(`${V('y')} = (${V('x')} − ${V('m')})<sup>2</sup> + ${V('n')}`)]];
+/* тест «Перевір себе»: 15 завдань від простіших (1) до складніших (2) — спільний для дошки й тренажера */
+const EXAM=[['K1',1],['K3',1],['K2',1],['K4',1],['K6',1],['K5',1],
+  ['K7',2],['K8',2],['K9',2],['K10',2],['K11',2],['K12',2],['K2',2],['K12',2],['K13',2]];
+const grade12=pts=>pts>0?Math.max(1,Math.round(pts/EXAM.length*12)):0;
+const balWord=n=>n%10===1&&n%100!==11?'бал':[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?'бали':'балів';
 /* скільки випадкових вправ іде після сталої (на дошці й у тренажері) */
 const REPS={K13:5};
 function randSet(kid,n){const K=KINDS[kid],seen=new Set([JSON.stringify(K.fixed)]),r=[];let g=0;
@@ -791,21 +796,21 @@ legHost.appendChild(hEl('div','mkl',`<span class="lg b"></span> графік ${n
 </script><script>(function(){
 const main=document.getElementById('main'),navb=document.getElementById('navb'),cnt=document.getElementById('cnt'),bar=document.getElementById('bar');
 const NS=SECS.length,TS=NS+1;let sec=-1,idx=0,SCR={};
-function taskCard(kid,n,fresh){const d=fresh?KINDS[kid].rand():KINDS[kid].fixed;const T=makeTask(kid,d,'prac');
-  const c=hEl('div','q',`<div class="qn"><span class="badge ${fresh?'ex':'pr'}">${fresh?'Нова вправа':'Як на уроці'}</span>Вправа ${n}. ${KINDS[kid].name}</div>`);c.appendChild(T.root);
-  const a=hEl('div','actions',`<button class="btn" data-c>Перевірити</button><button class="btn alt" data-r>Стерти</button><button class="btn ghost" data-s>Показати розв'язання</button>${fresh?'<button class="btn alt" data-n>Інша вправа ↻</button>':''}<span class="msg"></span>`);
-  T.tw.appendChild(a);const m=a.querySelector('.msg');
-  a.querySelector('[data-c]').onclick=()=>{const r=T.check(false);m.innerHTML=r.ok===r.n?'<span class="gr">Усе правильно! 🎉</span>':`Правильно ${r.ok} з ${r.n}`};
-  a.querySelector('[data-r]').onclick=()=>{T.reset();m.innerHTML=''};
-  a.querySelector('[data-s]').onclick=()=>{T.solve();m.innerHTML=''};
-  if(fresh)a.querySelector('[data-n]').onclick=()=>{const nc=taskCard(kid,n,true);c.replaceWith(nc);const s=SCR[sec];s[s.indexOf(c)]=nc;nc.hidden=false};
-  return c}
+function taskCard(kid,n){const c=hEl('div','q');
+  const mount=fresh=>{const T=makeTask(kid,fresh?KINDS[kid].rand():KINDS[kid].fixed,'prac');
+    c.innerHTML=`<div class="qn"><span class="badge pr">Працюємо</span>Вправа ${n}. ${KINDS[kid].name}</div>`;c.appendChild(T.root);
+    const a=hEl('div','actions',`<button class="btn" data-c>Перевірити</button><button class="btn alt" data-r>Стерти</button><button class="btn ghost" data-s>Показати розв'язання</button><button class="btn alt" data-n>Оновити ↻</button><span class="msg"></span>`);
+    T.tw.appendChild(a);const m=a.querySelector('.msg');
+    a.querySelector('[data-c]').onclick=()=>{const r=T.check(false);m.innerHTML=r.ok===r.n?'<span class="gr">Усе правильно! 🎉</span>':`Правильно ${r.ok} з ${r.n}`};
+    a.querySelector('[data-r]').onclick=()=>{T.reset();m.innerHTML=''};
+    a.querySelector('[data-s]').onclick=()=>{T.solve();m.innerHTML=''};
+    a.querySelector('[data-n]').onclick=()=>{mount(true);c.scrollIntoView({block:'start'})};};
+  mount(false);return c}
 
 /* ================= 8. ПЕРЕВІР СЕБЕ ================= */
 const TEACHER='snv.teacher@gmail.com';
 /* 15 завдань: від простіших до складніших */
-const EXAM=[['K1',1],['K3',1],['K2',1],['K4',1],['K6',1],['K5',1],
-            ['K7',2],['K8',2],['K9',2],['K10',2],['K11',2],['K12',2],['K2',2],['K12',2],['K13',2]];
+
 const TST={started:false,done:false,name:'',t0:0,cards:[],res:[]};
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 function devId(){let id=LS.get('pg_dev',null);if(!id){id='П-'+Math.random().toString(36).slice(2,7).toUpperCase();LS.set('pg_dev',id)}return id}
@@ -874,7 +879,7 @@ function buildSec(i){if(SCR[i])return SCR[i];const L=[];
   else if(i===NS){const q=hEl('div','q',`<div class="qn"><span class="badge">Розділ ${NS+1}</span>Міні-конспект</div><h2 class="qt">Підсумок</h2><div class="mk"></div>`);buildSummary(q.querySelector('.mk'),q);L.push(q)}
   else{const p=PLAN[i];const th=hEl('div','q',`<div class="qn"><span class="badge">Розділ ${i+1}</span>Пояснення</div><h2 class="qt">${SECS[i][0]}: ${SECS[i][1]}</h2><div class="exh"></div>`);
     EXPL[p[0]](th.querySelector('.exh'));L.push(th);
-    let n=0;p.slice(1).forEach(kid=>{L.push(taskCard(kid,++n,false));for(let r=0;r<(REPS[kid]||1);r++)L.push(taskCard(kid,++n,true))})}
+    let n=0;p.slice(1).forEach(kid=>L.push(taskCard(kid,++n)))}
   L.forEach(e=>{e.hidden=true;main.appendChild(e)});return SCR[i]=L}
 function toc(){sec=-1;Object.values(SCR).flat().forEach(e=>e.hidden=true);navb.hidden=true;bar.innerHTML='';document.getElementById('toc').hidden=false;document.getElementById('intro').hidden=false;scrollTo({top:0})}
 function open(i,j){sec=i;document.getElementById('toc').hidden=true;document.getElementById('intro').hidden=true;buildSec(i);show(j||0)}
