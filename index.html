@@ -147,6 +147,8 @@ input.num.wrong,select.sel.wrong{border-color:var(--bad);background:var(--badsof
 .hint2{color:var(--muted);font-size:.85em}
 .locked .vhit,.locked .plot{cursor:default}
 .fl{font-size:24px;font-weight:700;white-space:nowrap;line-height:44px;font-family:"Segoe UI",Roboto,Arial,sans-serif;text-shadow:0 0 3px var(--plbg),0 0 3px var(--plbg),0 0 4px var(--plbg)}.fl-new{color:var(--or)}.fl-ghost{color:var(--ghost)}.fl .pa{color:inherit}
+.tfig.stepfig{flex-direction:column;align-items:center;gap:6px}.stepcap{text-align:center;font-size:1.05em;min-height:1.5em}
+.fprev{font-size:1.35em;font-weight:600;text-align:center;min-height:1.6em;margin-top:4px}.fprev .muted{font-size:.7em;font-weight:400;margin-right:6px}
 
 /* ===== Тема оформлення учнівського тренажера (світла, яскрава) ===== */
 :root{
@@ -258,6 +260,8 @@ footer{padding:12px 0 0;color:#7185a5!important;font-size:13px!important}
  .actions .btn{font-size:14px;padding:9px 12px}
  .navb{gap:7px}
 }
+.navb .cnt,.navb .btn{white-space:nowrap}
+@media(max-width:600px){.navb .btn{font-size:15px;padding:10px 12px}}
 </style></head>
 <body><div class="wrap">
 <header>
@@ -572,8 +576,43 @@ K12:{sec:6,name:'Запиши формулу за графіком',
     const body=d.base==='sq'?`(${arg})<sup>2</sup>`:RT(arg);
     T.work.innerHTML=`<div class="line">${BASES[d.base].start} ${PT('',0,0)} перенесено в точку ${PTIN('',-d.a,d.b)}</div>
     <div class="note">Перенесення вздовж ${OX} на ${V('m')} — це ${nw(V('f')+'('+V('x')+' − '+V('m')+')')}; уздовж ${OY} на ${V('n')} — це ${nw(fx+' + '+V('n'))}.</div>
-    <div class="answer"><b>Відповідь:</b> ${nw(`${V('y')} = ${body} ${SEL(d.b>0?'+':'−',SG,'sg')} ${N(Math.abs(d.b),'s')}`)}</div>`},
-  ans:d=>`${FX(d.base,d.a,d.b)} (точку ${PT('',0,0)} перенесено в ${PT('',-d.a,d.b)}).`}
+    <div class="answer"><b>Відповідь:</b> ${nw(`${V('y')} = ${body} ${SEL(d.b>0?'+':'−',SG,'sg')} ${N(Math.abs(d.b),'s')}`)}</div>`;
+    /* формула звичайним текстом біля графіка — оновлюється під час введення */
+    const pv=hEl('div','fprev');T.fig.appendChild(pv);T.fig.classList.add('stepfig');
+    const f=[...T.work.querySelector('.answer').querySelectorAll('select.sel,input.num')];
+    const upd=()=>{const v=f.map(e=>e.value.trim()||'…'),arg=`${V('x')} ${v[0]} ${v[1]}`;
+      pv.innerHTML=`<span class="muted">Твоя формула:</span> ${nw(`${V('y')} = ${d.base==='sq'?`(${arg})<sup>2</sup>`:RT(arg)} ${v[2]} ${v[3]}`)}`};
+    T.work.addEventListener('input',upd);T.work.addEventListener('change',upd);upd();
+    return{solveHook:upd,resetHook:upd}},
+  ans:d=>`${FX(d.base,d.a,d.b)} (точку ${PT('',0,0)} перенесено в ${PT('',-d.a,d.b)}).`},
+
+/* 13. Будуємо графік поступово: базова функція → зсув уздовж Ox → зсув уздовж Oy */
+K13:{sec:6,name:'Будуємо графік крок за кроком',
+  fixed:{base:'sq',a:1,b:-4},
+  rand(){const base=pick(['sq','sq','sqrt','hyp']);let a,b;do{a=base==='sqrt'?rint(-3,3):rint(-3,3);b=rint(-3,3)}while(!a||!b||(base==='sq'&&b>3));return{base,a,b}},
+  cond:d=>`Побудуй графік функції ${FX(d.base,d.a,d.b)} поступово: спочатку базова функція, потім кожне перетворення окремо.`,
+  build(T,d){const B=BASES[d.base],P=new Plot(T.fig,B.view);P.path(B.polys(),'c-ghost');
+    const kp=d.base==='hyp'?[2,2]:[0,0],KN={sq:'Вершина параболи',sqrt:'Початкова точка графіка',hyp:'Точка (2;&nbsp;2) гіперболи переходить у точку'}[d.base];
+    const BOPT=['x²','√x','4/x'],bAns=BOPT[['sq','sqrt','hyp'].indexOf(d.base)];
+    const mid=sv('g',{},P.g),vx=sv('g',{},P.top),lim=[-5,5,0,0];
+    const cap=hEl('div','cap stepcap');T.fig.appendChild(cap);T.fig.classList.add('stepfig');
+    let phase=1;
+    const setCap=()=>{cap.innerHTML=phase===1?`<b class="or">Крок 2.</b> Перетягни графік уздовж осі ${OX}: ${FX(d.base,d.a,0)}`:
+      phase===2?`<b class="or">Крок 3.</b> Тепер перетягни уздовж осі ${OY}: ${FX(d.base,d.a,d.b)}`:`<span class="gr">Графік ${FX(d.base,d.a,d.b)} побудовано ✔</span>`};
+    const toPhase2=()=>{phase=2;lim[0]=lim[1]=-d.a;lim[2]=-6;lim[3]=6;mid.innerHTML='';
+      P.path(shiftP(B.polys(),-d.a,0),'c-ghost c-blue',mid);P.arrow(kp[0],kp[1],kp[0]-d.a,kp[1],'',mid);setCap()};
+    const dc=dragCurve(P,B.polys(),{axis:'xy',lim,onmove:s=>{vx.innerHTML='';P.dot(kp[0]+s.dx,kp[1]+s.dy,'c-new',vx)},
+      onchange:s=>{if(phase===1&&s.dx===-d.a)toPhase2();else if(phase===2&&s.dy===d.b){phase=3;P.arrow(kp[0]-d.a,kp[1],kp[0]-d.a,kp[1]+d.b,'',mid);setCap()}}});
+    const toPhase1=()=>{phase=1;lim[0]=-5;lim[1]=5;lim[2]=lim[3]=0;mid.innerHTML='';setCap()};
+    setCap();
+    T.work.innerHTML=`<div class="line"><b class="hl">Крок 1.</b> Базова функція: ${nw(`${V('y')} = ${SEL(bAns,BOPT)}`)}</div>
+    <div class="line"><b class="hl">Крок 2.</b> ${FX(d.base,d.a,0)}: зсув ${SEL(d.a>0?'вліво':'вправо',DIRH)} на ${N(Math.abs(d.a))}&nbsp;од.</div>
+    <div class="line"><b class="hl">Крок 3.</b> ${FX(d.base,d.a,d.b)}: зсув ${SEL(d.b>0?'вгору':'вниз',DIRV)} на ${N(Math.abs(d.b))}&nbsp;од.</div>
+    <div class="answer"><b>Відповідь:</b> ${KN} ${PTIN('',kp[0]-d.a,kp[1]+d.b)}</div>`;
+    return{items:[{check(){const ok=Math.round(dc.st.dx)===-d.a&&Math.round(dc.st.dy)===d.b;dc.mark(ok);return ok},
+      solve(){toPhase1();return dc.set(0,0,true).then(()=>dc.set(-d.a,0,true)).then(()=>{toPhase2();return dc.set(-d.a,d.b,true)}).then(()=>{phase=3;P.arrow(kp[0]-d.a,kp[1],kp[0]-d.a,kp[1]+d.b,'',mid);setCap();dc.mark(true)})},
+      overlay(){P.path(shiftP(B.polys(),-d.a,d.b),'c-ok')},reset(){toPhase1();dc.set(0,0);dc.clear()},lock(v){dc.st.locked=v}}]}},
+  ans:d=>`${FX(d.base,0,0)} → ${FX(d.base,d.a,0)} (${d.a>0?'вліво':'вправо'} на ${Math.abs(d.a)} од.) → ${FX(d.base,d.a,d.b)} (${d.b>0?'вгору':'вниз'} на ${Math.abs(d.b)} од.).`}
 };
 function FX0(){return nw(V('y')+' = '+fx)}
 function KT(k){return nw(`${V('y')} = ${k<1?HALF:k}${fx}`)}
@@ -591,7 +630,7 @@ function makeTask(kid,d,mode){ /* mode: board | prac | exam */
   let last=null;
   if(inputs.length){const kp=hEl('div','keypad');KEYS.forEach(k=>{const b=hEl('button','',k);b.type='button';b.addEventListener('pointerdown',e=>e.preventDefault());
       b.onclick=()=>{if(R.locked)return;const inp=last||inputs.find(i=>!i.value)||inputs[0];inp.classList.remove('right','wrong');
-        if(k==='⌫')inp.value=inp.value.slice(0,-1);else if(k==='−')inp.value=inp.value.startsWith('−')?inp.value.slice(1):'−'+inp.value;else inp.value+=k;inp.focus()};kp.appendChild(b)});tw.appendChild(kp);
+        if(k==='⌫')inp.value=inp.value.slice(0,-1);else if(k==='−')inp.value=inp.value.startsWith('−')?inp.value.slice(1):'−'+inp.value;else inp.value+=k;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.focus()};kp.appendChild(b)});tw.appendChild(kp);
     inputs.forEach(i=>{i.addEventListener('focus',()=>{last=i;inputs.forEach(j=>j.classList.toggle('foc',j===i))});
       i.addEventListener('input',()=>{i.classList.remove('right','wrong');i.value=i.value.replace(/-/g,'−').replace(/[^0-9−.,]/g,'')})})}
   sels.forEach(s=>s.addEventListener('change',()=>s.classList.remove('right','wrong')));
@@ -725,7 +764,11 @@ E5:host=>{const base=[rng(-6,6,.02).map(x=>[x,(x-2)**2-1])];
 const SECS=[['Зсув уздовж Oy',nw(`${V('y')} = ${fx} + ${V('b')}`)],['Зсув уздовж Ox',nw(`${V('y')} = ${V('f')}(${V('x')} + ${V('a')})`)],
   ['Симетрія',nw(`${V('y')} = −${fx}; &nbsp; ${V('y')} = ${V('f')}(−${V('x')})`)],['Розтяг і стиск',nw(`${V('y')} = ${V('k')}${fx}; &nbsp; ${V('y')} = ${V('f')}(${V('k')}${V('x')})`)],
   ['Модуль',nw(`${V('y')} = |${fx}|; &nbsp; ${V('y')} = ${V('f')}(|${V('x')}|)`)],['Два зсуви',nw(`${V('y')} = (${V('x')} − ${V('m')})<sup>2</sup> + ${V('n')}`)]];
-const PLAN=[['E1','K1','K2'],['E2','K3','K4'],['E3','K5','K6'],['E4','K7','K8'],['E5','K9','K10'],['E6','K11','K12']];
+/* скільки випадкових вправ іде після сталої (на дошці й у тренажері) */
+const REPS={K13:5};
+function randSet(kid,n){const K=KINDS[kid],seen=new Set([JSON.stringify(K.fixed)]),r=[];let g=0;
+  while(r.length<n&&g++<500){const d=K.rand(),k=JSON.stringify(d);if(!seen.has(k)){seen.add(k);r.push(d)}}return r}
+const PLAN=[['E1','K1','K2'],['E2','K3','K4'],['E3','K5','K6'],['E4','K7','K8'],['E5','K9','K10'],['E6','K11','K12','K13']];
 
 /* підсумок: міні-конспект */
 function buildSummary(g,legHost){const x=V('x'),y=V('y'),P=(a,b)=>nw(`(${a};&nbsp;${b})`);
@@ -747,7 +790,7 @@ C.forEach(([f,base,tr,txt,pt,arr,ax])=>{const c=hEl('div','mkc',`<div class="mkf
 legHost.appendChild(hEl('div','mkl',`<span class="lg b"></span> графік ${nw(y+' = '+fx)} &emsp; <span class="lg o"></span> новий графік`));}
 </script><script>(function(){
 const main=document.getElementById('main'),navb=document.getElementById('navb'),cnt=document.getElementById('cnt'),bar=document.getElementById('bar');
-const NS=SECS.length;let sec=-1,idx=0,SCR={};
+const NS=SECS.length,TS=NS+1;let sec=-1,idx=0,SCR={};
 function taskCard(kid,n,fresh){const d=fresh?KINDS[kid].rand():KINDS[kid].fixed;const T=makeTask(kid,d,'prac');
   const c=hEl('div','q',`<div class="qn"><span class="badge ${fresh?'ex':'pr'}">${fresh?'Нова вправа':'Як на уроці'}</span>Вправа ${n}. ${KINDS[kid].name}</div>`);c.appendChild(T.root);
   const a=hEl('div','actions',`<button class="btn" data-c>Перевірити</button><button class="btn alt" data-r>Стерти</button><button class="btn ghost" data-s>Показати розв'язання</button>${fresh?'<button class="btn alt" data-n>Інша вправа ↻</button>':''}<span class="msg"></span>`);
@@ -757,24 +800,95 @@ function taskCard(kid,n,fresh){const d=fresh?KINDS[kid].rand():KINDS[kid].fixed;
   a.querySelector('[data-s]').onclick=()=>{T.solve();m.innerHTML=''};
   if(fresh)a.querySelector('[data-n]').onclick=()=>{const nc=taskCard(kid,n,true);c.replaceWith(nc);const s=SCR[sec];s[s.indexOf(c)]=nc;nc.hidden=false};
   return c}
+
+/* ================= 8. ПЕРЕВІР СЕБЕ ================= */
+const TEACHER='snv.teacher@gmail.com';
+/* 15 завдань: від простіших до складніших */
+const EXAM=[['K1',1],['K3',1],['K2',1],['K4',1],['K6',1],['K5',1],
+            ['K7',2],['K8',2],['K9',2],['K10',2],['K11',2],['K12',2],['K2',2],['K12',2],['K13',2]];
+const TST={started:false,done:false,name:'',t0:0,cards:[],res:[]};
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+function devId(){let id=LS.get('pg_dev',null);if(!id){id='П-'+Math.random().toString(36).slice(2,7).toUpperCase();LS.set('pg_dev',id)}return id}
+function devLabel(){const u=navigator.userAgent;const os=/iPhone/.test(u)?'iPhone':/iPad/.test(u)?'iPad':/Android/.test(u)?'Android':/Windows/.test(u)?'Windows':/Mac/.test(u)?'Mac':/Linux/.test(u)?'Linux':'інше';
+  const br=/Edg\//.test(u)?'Edge':/OPR\//.test(u)?'Opera':/Chrome\//.test(u)?'Chrome':/Firefox\//.test(u)?'Firefox':/Safari\//.test(u)?'Safari':'браузер';
+  return `${devId()} · ${os}, ${br}, екран ${screen.width}×${screen.height}`}
+function testIntro(){const q=hEl('div','q',`<div class="qn"><span class="badge">Розділ ${TS+1}</span>Тест</div><h2 class="qt">Перевір себе</h2>
+  <div class="box soft"><div>15 завдань: спочатку простіші, потім складніші.</div><div>Графіки перетягуй, формули добирай за графіком.</div><div>У кожному завданні натисни <b>«Відповісти»</b>: змінити відповідь потім не можна.</div><div>Оцінка — за 12-бальною шкалою, результат автоматично надійде вчителю.</div></div>
+  <div class="qt" style="font-size:19px">Введи своє прізвище та ім’я</div>
+  <input class="name" id="tnm" type="text" autocomplete="name" maxlength="60" placeholder="Наприклад: Коваленко Оксана">
+  <div id="tnfb"></div><div class="actions"><button class="btn" id="tgo">Почати тест</button></div>`);
+  const nm=q.querySelector('#tnm'),go=()=>{const v=nm.value.trim().replace(/\s+/g,' ');
+    if(v.length<3||!/\s/.test(v)){q.querySelector('#tnfb').innerHTML='<div class="fb bad">Напиши і прізвище, і ім’я.</div>';nm.focus();return}
+    TST.name=v;startTest(q)};
+  q.querySelector('#tgo').onclick=go;nm.onkeydown=e=>{if(e.key==='Enter')go()};return q}
+function examCard(k,kid,lvl){const T=makeTask(kid,KINDS[kid].rand(),'exam');
+  const c=hEl('div','q',`<div class="qn"><span class="badge ${lvl===1?'pr':'ex'}">${lvl===1?'Простіше':'Складніше'}</span>Завдання ${k+1} з ${EXAM.length}. ${KINDS[kid].name}</div>`);c.appendChild(T.root);
+  const a=hEl('div','actions',`<button class="btn" data-ans>Відповісти</button><span class="msg"></span>`);T.tw.appendChild(a);const m=a.querySelector('.msg'),b=a.querySelector('[data-ans]');
+  b.onclick=()=>{if(TST.res[k]!=null)return;const r=T.check(true);TST.res[k]=r.ok/r.n;T.lock();T.overlay();b.hidden=true;
+    m.innerHTML=r.ok===r.n?'<span class="gr">Правильно ✓</span>':r.ok?`<span class="or">Частково: ${r.ok} з ${r.n}</span>`:'<span class="rd">Неправильно ✗</span>';
+    m.innerHTML+=' <span class="hint2">(зеленим пунктиром — правильний графік)</span>';updFin()};
+  return c}
+function startTest(intro){TST.started=true;TST.done=false;TST.t0=Date.now();TST.res=EXAM.map(()=>null);
+  const L=SCR[TS];L.slice(1).forEach(e=>e.remove());L.length=1;
+  intro.querySelector('#tgo').textContent='Тест розпочато';intro.querySelector('#tgo').disabled=true;intro.querySelector('#tnm').readOnly=true;
+  TST.cards=EXAM.map(([kid,lvl],k)=>examCard(k,kid,lvl));
+  const fin=hEl('div','q',`<div class="qn"><span class="badge">Завершення</span></div><h2 class="qt">Завершити тест</h2><div class="fin"></div><div class="actions"><button class="btn" data-fin>Завершити й надіслати</button></div>`);
+  fin.querySelector('[data-fin]').onclick=finish;TST.fin=fin;
+  [...TST.cards,fin].forEach(e=>{e.hidden=true;main.appendChild(e);L.push(e)});updFin();show(1)}
+function updFin(){if(!TST.fin)return;const n=TST.res.filter(v=>v!=null).length,miss=TST.res.map((v,i)=>v==null?i+1:0).filter(Boolean);
+  TST.fin.querySelector('.fin').innerHTML=`<div>Відповіді є на <b>${n}</b> з ${EXAM.length} завдань.</div>`+(miss.length?`<div class="fb bad" style="margin-top:8px">Без відповіді: ${miss.join(', ')}. Їх буде зараховано як неправильні.</div>`:'')}
+const word=n=>n%10===1&&n%100!==11?'бал':[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?'бали':'балів';
+const fmt=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+function finish(){if(TST.done)return;const miss=TST.res.filter(v=>v==null).length;
+  if(miss&&!confirm(`Без відповіді ${miss} завд. Завершити тест?`))return;
+  TST.done=true;TST.cards.forEach((c,k)=>{if(TST.res[k]==null){TST.res[k]=0;const b=c.querySelector('[data-ans]');b.hidden=true;c.querySelector('.msg').innerHTML='<span class="rd">Без відповіді</span>'}});
+  const pts=TST.res.reduce((a,b)=>a+b,0),g=pts>0?Math.max(1,Math.round(pts/EXAM.length*12)):0,sec=Math.round((Date.now()-TST.t0)/1000);
+  const hist=LS.get('pg_hist',[]);const prev=hist.map(h=>`${h.name} (${h.when}, ${h.g} б.)`);
+  const when=new Date().toLocaleString('uk-UA');hist.push({name:TST.name,when,g});LS.set('pg_hist',hist.slice(-20));
+  const det=TST.res.map((v,k)=>`${k+1}) ${v===1?'+':v>0?'частково':'−'}`).join(', ');
+  const others=[...new Set(hist.slice(0,-1).map(h=>h.name).filter(x=>x.toLowerCase()!==TST.name.toLowerCase()))];
+  TST.fin.innerHTML=`<div class="qn"><span class="badge">Результат</span>${TST.name} · час ${fmt(sec)}</div><div class="result" style="display:flex;flex-direction:column;gap:10px">
+    <div class="big">${g} з 12</div><div class="grade">${g} ${word(g)}</div>
+    <div class="hint">Правильно повністю: ${TST.res.filter(v=>v===1).length} з ${EXAM.length}; частково: ${TST.res.filter(v=>v>0&&v<1).length}.</div>
+    <div id="tsend" style="width:100%"></div>
+    <div class="hint">Повернись до завдань кнопкою «Назад», щоб переглянути помилки.</div></div>`;
+  const r={'_subject':`Тест «Перетворення графіків»: ${TST.name} — ${g} з 12`,'_template':'table','_captcha':'false',
+    'Учень':TST.name,'Оцінка':`${g} з 12`,'Бали (з 15)':pts.toFixed(1).replace('.',','),'Завдання':det,'Час виконання':fmt(sec),'Дата':when,
+    'Пристрій':devLabel(),'Інші імена на цьому пристрої':others.length?others.join(', '):'немає','Попередні спроби на пристрої':prev.length?prev.join('; '):'немає'};
+  show(SCR[TS].length-1);sendRes(r)}
+const SHEET_URL="https://script.google.com/macros/s/AKfycbzM7TLQaL4Pd4VKw3tBYgg8lmwlguuL7gGlD-0XfF-MU4HF0yTYhQG2N1lDEceRM2819g/exec",SHEET_TOKEN="7b3f9c21e5a84d06";
+function toSheet(r){const path=`Перетворення графіків/${r['Учень']}/${r['Дата']}`;
+  const summary=`Тест «Перетворення графіків»: ${r['Учень']} — ${r['Оцінка']}, час ${r['Час виконання']}; ${r['Завдання']}; пристрій ${r['Пристрій']}; інші імена на пристрої: ${r['Інші імена на цьому пристрої']}; IP ${r['IP-адреса']}`;
+  const data={};Object.keys(r).filter(k=>k[0]!=='_').forEach(k=>data[k]=r[k]);
+  return fetch(SHEET_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:SHEET_TOKEN,test:'Перетворення графіків функцій',path,summary,data})}).then(x=>x.json()).then(j=>{if(j&&j.ok===false)throw new Error(j.error||'sheet');return true})}
+async function sendRes(r){const st=document.getElementById('tsend');st.innerHTML='<div class="fb" style="background:var(--accsoft);color:var(--acc)">Надсилаю результат вчителю…</div>';
+  try{const c=new AbortController();setTimeout(()=>c.abort(),3500);const j=await(await fetch('https://api.ipify.org?format=json',{signal:c.signal})).json();r['IP-адреса']=j.ip}catch(e){r['IP-адреса']='не вдалося визначити'}
+  const sh=toSheet(r).then(()=>true,()=>false);
+  try{const x=await fetch('https://formsubmit.co/ajax/'+TEACHER,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(r)});
+    const j=await x.json().catch(()=>({}));if(!x.ok||String(j.success)==='false')throw new Error(j.message||x.status);
+    st.innerHTML='<div class="fb ok"><b>Результат надіслано вчителю ✓</b></div>'}
+  catch(e){if(await sh){st.innerHTML='<div class="fb ok"><b>Результат надіслано вчителю ✓</b></div>';return}const body=Object.keys(r).filter(k=>k[0]!=='_').map(k=>`${k}: ${r[k]}`).join('\n');
+    st.innerHTML=`<div class="fb bad"><b>Не вдалося надіслати автоматично.</b>Натисни кнопку, щоб надіслати результат листом.<div class="actions" style="margin-top:8px"><a class="btn" href="mailto:${TEACHER}?subject=${encodeURIComponent(r._subject)}&body=${encodeURIComponent(body)}" style="text-decoration:none">Надіслати листом</a></div></div>`}}
 function buildSec(i){if(SCR[i])return SCR[i];const L=[];
-  if(i===NS){const q=hEl('div','q',`<div class="qn"><span class="badge">Розділ ${NS+1}</span>Міні-конспект</div><h2 class="qt">Підсумок</h2><div class="mk"></div>`);buildSummary(q.querySelector('.mk'),q);L.push(q)}
+  if(i===TS){L.push(testIntro())}
+  else if(i===NS){const q=hEl('div','q',`<div class="qn"><span class="badge">Розділ ${NS+1}</span>Міні-конспект</div><h2 class="qt">Підсумок</h2><div class="mk"></div>`);buildSummary(q.querySelector('.mk'),q);L.push(q)}
   else{const p=PLAN[i];const th=hEl('div','q',`<div class="qn"><span class="badge">Розділ ${i+1}</span>Пояснення</div><h2 class="qt">${SECS[i][0]}: ${SECS[i][1]}</h2><div class="exh"></div>`);
     EXPL[p[0]](th.querySelector('.exh'));L.push(th);
-    let n=0;p.slice(1).forEach(kid=>{n++;L.push(taskCard(kid,2*n-1,false));L.push(taskCard(kid,2*n,true))})}
+    let n=0;p.slice(1).forEach(kid=>{L.push(taskCard(kid,++n,false));for(let r=0;r<(REPS[kid]||1);r++)L.push(taskCard(kid,++n,true))})}
   L.forEach(e=>{e.hidden=true;main.appendChild(e)});return SCR[i]=L}
 function toc(){sec=-1;Object.values(SCR).flat().forEach(e=>e.hidden=true);navb.hidden=true;bar.innerHTML='';document.getElementById('toc').hidden=false;document.getElementById('intro').hidden=false;scrollTo({top:0})}
 function open(i,j){sec=i;document.getElementById('toc').hidden=true;document.getElementById('intro').hidden=true;buildSec(i);show(j||0)}
 function show(j){const L=SCR[sec];idx=clamp(j,0,L.length-1);Object.values(SCR).flat().forEach(e=>e.hidden=true);L[idx].hidden=false;navb.hidden=false;
-  const nm=sec===NS?'Підсумок':`${sec+1}. ${SECS[sec][0]}`;bar.innerHTML=`<button class="btn ghost sm" id="tocb">☰ Зміст</button><b class="secn">${nm}</b>`;
+  const nm=sec===TS?`${TS+1}. Перевір себе`:sec===NS?'Підсумок':`${sec+1}. ${SECS[sec][0]}`;bar.innerHTML=`<button class="btn ghost sm" id="tocb">☰ Зміст</button><b class="secn">${nm}</b>`;
   document.getElementById('tocb').onclick=toc;
   cnt.textContent=L.length>1?`${idx+1} / ${L.length}`:'';
   document.getElementById('back').textContent=idx===0?'◀ Зміст':'◀ Назад';
-  const last=idx===L.length-1;document.getElementById('fwd').textContent=last?(sec<NS?'Наступний розділ ▶':'До змісту'):'Вперед ▶';scrollTo({top:0})}
+  const last=idx===L.length-1;document.getElementById('fwd').textContent=last?(sec<NS?'Наступний розділ ▶':sec===NS?'Перевір себе ▶':'До змісту'):'Вперед ▶';
+  if(sec===TS){const f=document.getElementById('fwd');f.hidden=(idx===0&&!TST.started)||(TST.done&&last)}else document.getElementById('fwd').hidden=false;scrollTo({top:0})}
 document.getElementById('back').onclick=()=>idx===0?toc():show(idx-1);
-document.getElementById('fwd').onclick=()=>{if(idx<SCR[sec].length-1)show(idx+1);else if(sec<NS)open(sec+1);else toc()};
+document.getElementById('fwd').onclick=()=>{if(idx<SCR[sec].length-1)show(idx+1);else if(sec<=NS)open(sec+1);else toc()};
 const t=document.getElementById('toc');
-t.innerHTML=SECS.map((s,i)=>`<button class="tocb" data-s="${i}"><b>${i+1}</b><span>${s[0]}<small>${s[1]}</small></span></button>`).join('')+`<button class="tocb" data-s="${NS}"><b>${NS+1}</b><span>Підсумок<small class="plain">міні-конспект</small></span></button>`;
+t.innerHTML=SECS.map((s,i)=>`<button class="tocb" data-s="${i}"><b>${i+1}</b><span>${s[0]}<small>${s[1]}</small></span></button>`).join('')+`<button class="tocb" data-s="${NS}"><b>${NS+1}</b><span>Підсумок<small class="plain">міні-конспект</small></span></button><button class="tocb tst" data-s="${TS}"><b>${TS+1}</b><span>Перевір себе<small class="plain">тест · 15 завдань · 12 балів</small></span></button>`;
 t.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>open(+b.dataset.s));
 toc();
 })();
